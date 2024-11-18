@@ -15,10 +15,10 @@ class MenuItem {
 
 const appMenuItems = <MenuItem>[
   MenuItem(
-      title: 'Riverpod Counter ',
-      subTitle: 'Introduccion a Riverpod',
+      title: 'Restaurar ultimo partido',
+      subTitle: 'Retoma el ultimo partido guardado',
       link: '/counter-river',
-      icon: Icons.sports_basketball_rounded),
+      icon: Icons.sports_outlined),
   MenuItem(
       title: 'Configuracion',
       subTitle: 'Configuración general',
@@ -28,19 +28,19 @@ const appMenuItems = <MenuItem>[
       title: 'Deportes',
       subTitle: 'Seleccionar deporte',
       link: '/deportes',
-      icon: Icons.local_play_rounded),
+      icon: Icons.star_purple500_outlined),
   MenuItem(
       title: 'Introduccion a aplicacion',
       subTitle: 'Pequeño tutotual de la aplicacion',
       link: '/tutorial',
-      icon: Icons.temple_buddhist),
+      icon: Icons.adb_rounded),
   MenuItem(
       title: 'Dispositivos Conectados',
       subTitle: 'Conexion de dispositivos',
       link: '/infinite',
-      icon: Icons.masks_rounded),
+      icon: Icons.connect_without_contact_sharp),
   MenuItem(
-      title: 'Configuracion de tema',
+      title: 'Configuracion de tema ',
       subTitle: 'Seleccion de color',
       link: '/Theme-changer',
       icon: Icons.color_lens_outlined),

@@ -17,7 +17,7 @@ final appRouter = GoRouter(
     ),
      GoRoute(
       path: '/deportes',
-      builder: (context, state) => const DeportesScreen(),
+      builder: (context, state) => const DeportesScreens(),
     ),
   ],
 );

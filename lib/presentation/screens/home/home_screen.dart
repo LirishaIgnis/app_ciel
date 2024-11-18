@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:app_ciel/config/menu/menu_items.dart';
-//import 'package:widgets_app/presentation/widgets/side_menu.dart';
+
 
 
 
@@ -15,10 +15,11 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       key: scaffoldKey,
       appBar: AppBar(
-        title: const Text('Home'),
+        title: const Text('Bienvenido'),
+        
       ),
       body: const _HomeView(),
-      //drawer:  SideMenu(scaffoldKey: scaffoldKey),
+     
     );
   }
 }
@@ -58,18 +59,6 @@ class _CustomListTile extends StatelessWidget {
       title: Text(menuItem.title),
       subtitle: Text(menuItem.subTitle),
       onTap: () {
-        // Estruturas basica para navegar entre pantallas mediante link.
-
-        //Link directo
-        //Navigator.of(context).push(
-        // MaterialPageRoute(
-        //builder: (context)=> const ConfiguracionScreen(),
-        // ),
-        //);
-
-        //Link con dirreciones desde el main
-        //Navigator.pushNamed(context, menuItem.link);
-
         context.push(menuItem.link);
       },
     );
