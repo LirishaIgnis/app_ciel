@@ -17,17 +17,17 @@ const appSportItems = <SportItems>[
   SportItems(
       title: 'Basketball',
       subTitle: 'Configuracion de partido',
-      link: '/counter-river',
+      link: '/basketball',
       icon: Icons.sports_basketball_rounded),
   SportItems(
       title: 'Futbol',
-      subTitle: 'Configuracion de patido',
-      link: '/counter-river',
+      subTitle: 'Configuracion de partido',
+      link: '/futbol',
       icon: Icons.sports_soccer_outlined),
   SportItems(
       title: 'Voleybol',
-      subTitle: 'Configuracion de patido',
-      link: '/counter-river',
+      subTitle: 'Configuracion de partido',
+      link: '/voleybol',
       icon: Icons.sports_volleyball_rounded),
   
 ];

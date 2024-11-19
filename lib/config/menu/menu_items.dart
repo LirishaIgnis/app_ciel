@@ -17,7 +17,7 @@ const appMenuItems = <MenuItem>[
   MenuItem(
       title: 'Restaurar ultimo partido',
       subTitle: 'Retoma el ultimo partido guardado',
-      link: '/counter-river',
+      link: '/restaurar',
       icon: Icons.sports_outlined),
   MenuItem(
       title: 'Configuracion',
@@ -30,19 +30,13 @@ const appMenuItems = <MenuItem>[
       link: '/deportes',
       icon: Icons.star_purple500_outlined),
   MenuItem(
-      title: 'Introduccion a aplicacion',
-      subTitle: 'Pequeño tutotual de la aplicacion',
+      title: 'Informacion de la aplicacion',
+      subTitle: 'Licencias y tutorial',
       link: '/tutorial',
       icon: Icons.adb_rounded),
   MenuItem(
       title: 'Dispositivos Conectados',
       subTitle: 'Conexion de dispositivos',
       link: '/infinite',
-      icon: Icons.connect_without_contact_sharp),
-  MenuItem(
-      title: 'Configuracion de tema ',
-      subTitle: 'Seleccion de color',
-      link: '/Theme-changer',
-      icon: Icons.color_lens_outlined),
-  
+      icon: Icons.connect_without_contact_sharp),  
 ];

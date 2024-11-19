@@ -19,7 +19,11 @@ class HomeScreen extends StatelessWidget {
         
       ),
       body: const _HomeView(),
-     
+      floatingActionButton: FloatingActionButton(
+        child: const Icon(Icons.settings), 
+        onPressed:(){},
+      ) ,
+      
     );
   }
 }

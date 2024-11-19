@@ -1,4 +1,3 @@
-import 'package:app_ciel/presentation/screens/configuracion/configuracion_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:app_ciel/presentation/screens/screens.dart';
 
@@ -12,6 +11,10 @@ final appRouter = GoRouter(
       builder: (context, state) => const HomeScreen(),
     ),
      GoRoute(
+      path: '/restaurar',
+      builder: (context, state) => const RestaurationScreen(),
+    ),
+     GoRoute(
       path: '/configuracion',
       builder: (context, state) => const ConfiguracionScreen(),
     ),
@@ -19,5 +22,18 @@ final appRouter = GoRouter(
       path: '/deportes',
       builder: (context, state) => const DeportesScreens(),
     ),
+                  GoRoute(
+                    path: '/basketball',
+                    builder: (context, state) => const BasketBallScreen(),
+                  ),
+                  
+                  GoRoute(
+                    path: '/futbol',
+                    builder: (context, state) => const FutbolScreen(),
+                  ),
+                  GoRoute(
+                    path: '/voleybol',
+                    builder: (context, state) => const VoleybolScreen(),
+                  ),
   ],
 );
