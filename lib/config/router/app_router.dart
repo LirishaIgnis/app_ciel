@@ -42,6 +42,10 @@ final appRouter = GoRouter(
                     path: '/voleybol',
                     builder: (context, state) => const VoleybolScreen(),
                   ),
+                              GoRoute(
+                                path: '/tablero',
+                                builder: (context, state) => const TableroScreen(),
+                              ),
     GoRoute(
       path: '/conexion',
       builder: (context, state) => const ConexionScreen(),

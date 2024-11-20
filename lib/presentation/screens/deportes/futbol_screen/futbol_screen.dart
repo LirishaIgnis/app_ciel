@@ -1,8 +1,8 @@
-import 'package:app_ciel/presentation/screens/Tablero/tablero_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class FutbolScreen extends StatelessWidget {
-  static const name = 'ui_controls_screen';
+  static const name = 'futbol_settings_screen';
 
   const FutbolScreen({super.key});
 
@@ -10,116 +10,159 @@ class FutbolScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Configuracion Futbol'),
+        title: const Text('Configuración de Partido de Fútbol'),
       ),
-      body: const _UiControlsView(),
+      body: const _FutbolSettingsView(),
       floatingActionButton: FloatingActionButton(
-          child: const Icon(Icons.sports_soccer),
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-              builder: (context) => TableroScreen(),
-              ),
-            );
-          }),
+        child: const Icon(Icons.sports_soccer),
+        onPressed: () {
+          context.push('/tablero');
+          // Acción para iniciar el partido o navegación adicional
+        },
+      ),
     );
   }
 }
 
-class _UiControlsView extends StatefulWidget {
-  const _UiControlsView();
+class _FutbolSettingsView extends StatefulWidget {
+  const _FutbolSettingsView();
 
   @override
-  State<_UiControlsView> createState() => _UiControlsViewState();
+  State<_FutbolSettingsView> createState() => _FutbolSettingsViewState();
 }
 
-enum Transportations { car, plane, boat, submarine }
+class _FutbolSettingsViewState extends State<_FutbolSettingsView> {
+  // Datos obtenidos de otra configuración
+  final String homeTeam = 'Equipo Local'; // Simulación de datos
+  final String awayTeam = 'Equipo Visitante'; // Simulación de datos
 
-class _UiControlsViewState extends State<_UiControlsView> {
-  bool isDeveloper = true;
-  Transportations selectedTranspotation = Transportations.car;
-  bool wantsBreakfast = false;
-  bool wantsLunch = false;
-  bool wantsDinner = false;
+  String selectedHalfTime = '45'; // Duración de los tiempos
+  bool extraTimeEnabled = false; // Tiempo extra habilitado
+  bool penaltyShootoutEnabled = false; // Penales habilitados
+  bool varEnabled = false; // VAR habilitado
+
+  final halfTimeOptions = ['45', '30']; // Opciones comunes para duraciones
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      physics: const ClampingScrollPhysics(),
-      children: [
-        SwitchListTile(
-          title: const Text('Developer Mode'),
-          subtitle: const Text('Controles adicionales'),
-          value: isDeveloper,
-          onChanged: (value) => setState(() {
-            isDeveloper = !isDeveloper;
-          }),
-        ),
-        ExpansionTile(
-          title: const Text('Vehiculo de transporte'),
-          subtitle: Text('$selectedTranspotation'),
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: ListView(
+        children: [
+          const Text(
+            'Equipos Participantes',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          ListTile(
+            leading: const Icon(Icons.sports_soccer),
+            title: Text('Equipo Local: $homeTeam'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.support),
+            title: Text('Equipo Visitante: $awayTeam'),
+          ),
+          const Divider(),
+          const SizedBox(height: 10),
+          const Text(
+            'Configuraciones del Partido',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          // Selección de duración de los tiempos
+          DropdownButtonFormField<String>(
+            decoration: const InputDecoration(
+              labelText: 'Duración de los Tiempos (Minutos)',
+              border: OutlineInputBorder(),
+            ),
+            value: selectedHalfTime,
+            items: halfTimeOptions
+                .map((option) => DropdownMenuItem(
+                      value: option,
+                      child: Text('$option minutos'),
+                    ))
+                .toList(),
+            onChanged: (value) {
+              setState(() {
+                selectedHalfTime = value!;
+              });
+            },
+          ),
+          const SizedBox(height: 20),
+          // Switch para habilitar/deshabilitar el tiempo extra
+          SwitchListTile(
+            title: const Text('Tiempo Extra Habilitado'),
+            subtitle: const Text('Permitir tiempo extra en caso de empate'),
+            value: extraTimeEnabled,
+            onChanged: (value) {
+              setState(() {
+                extraTimeEnabled = value;
+              });
+            },
+          ),
+          const SizedBox(height: 10),
+          // Switch para habilitar/deshabilitar los penales
+          SwitchListTile(
+            title: const Text('Penales Habilitados'),
+            subtitle: const Text('Permitir penales en caso de empate tras tiempo extra'),
+            value: penaltyShootoutEnabled,
+            onChanged: (value) {
+              setState(() {
+                penaltyShootoutEnabled = value;
+              });
+            },
+          ),
+          const SizedBox(height: 10),
+          // Switch para habilitar/deshabilitar el VAR
+          SwitchListTile(
+            title: const Text('VAR Habilitado'),
+            subtitle: const Text('Permitir el uso del VAR (Revisión de jugadas)'),
+            value: varEnabled,
+            onChanged: (value) {
+              setState(() {
+                varEnabled = value;
+              });
+            },
+          ),
+          const SizedBox(height: 30),
+          Center(
+            child: ElevatedButton(
+              onPressed: _showSummary,
+              child: const Text('Guardar y Mostrar Configuración'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSummary() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Resumen del Partido'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            RadioListTile(
-              title: const Text('By Car'),
-              subtitle: const Text('Viajar en carro'),
-              value: Transportations.car,
-              groupValue: selectedTranspotation,
-              onChanged: (value) => setState(() {
-                selectedTranspotation = Transportations.car;
-              }),
-            ),
-            RadioListTile(
-              title: const Text('By Boat'),
-              subtitle: const Text('Viajar en Bote'),
-              value: Transportations.boat,
-              groupValue: selectedTranspotation,
-              onChanged: (value) => setState(() {
-                selectedTranspotation = Transportations.boat;
-              }),
-            ),
-            RadioListTile(
-              title: const Text('By Plane'),
-              subtitle: const Text('Viajar en Avion'),
-              value: Transportations.plane,
-              groupValue: selectedTranspotation,
-              onChanged: (value) => setState(() {
-                selectedTranspotation = Transportations.plane;
-              }),
-            ),
-            RadioListTile(
-              title: const Text('By Submarine'),
-              subtitle: const Text('Viajar en Submarino'),
-              value: Transportations.submarine,
-              groupValue: selectedTranspotation,
-              onChanged: (value) => setState(() {
-                selectedTranspotation = Transportations.submarine;
-              }),
-            ),
+            Text('Equipo Local: $homeTeam'),
+            Text('Equipo Visitante: $awayTeam'),
+            Text('Duración de los Tiempos: $selectedHalfTime minutos'),
+            Text(
+                'Tiempo Extra: ${extraTimeEnabled ? 'Habilitado' : 'Deshabilitado'}'),
+            Text(
+                'Penales: ${penaltyShootoutEnabled ? 'Habilitados' : 'Deshabilitados'}'),
+            Text('VAR: ${varEnabled ? 'Habilitado' : 'Deshabilitado'}'),
           ],
         ),
-        CheckboxListTile(
-          title: const Text('Quiere desayuno?'),
-          value: wantsBreakfast,
-          onChanged: (value) => setState(() {
-            wantsBreakfast = !wantsBreakfast;
-          }),
-        ),
-         CheckboxListTile(
-          title: const Text('Quiere Almuerzo?'),
-          value: wantsLunch,
-          onChanged: (value) => setState(() {
-            wantsLunch = !wantsLunch;
-          }),
-          
-        ),
-         CheckboxListTile(
-          title: const Text('Quiere Cena?'),
-          value: wantsDinner,
-          onChanged: (value) => setState(() {
-            wantsDinner = !wantsDinner;
-          }),
-        ),
-      ],
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+            },
+            child: const Text('Cerrar'),
+          ),
+        ],
+      ),
     );
   }
 }
