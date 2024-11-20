@@ -1,6 +1,12 @@
 
 
 
+export 'package:app_ciel/presentation/screens/configuracion/configuracion_general_screen.dart';
+
+export 'package:app_ciel/presentation/screens/app_tutorial/app_tutorial_screen.dart';
+
+export 'package:app_ciel/presentation/screens/conexion_screen/conexion_screen.dart';
+
 export 'package:app_ciel/presentation/screens/Tablero/tablero_screen.dart';
 
 export 'package:app_ciel/presentation/screens/deportes/voleybol_screen/voleybol_screen.dart';

@@ -32,11 +32,11 @@ const appMenuItems = <MenuItem>[
   MenuItem(
       title: 'Informacion de la aplicacion',
       subTitle: 'Licencias y tutorial',
-      link: '/tutorial',
+      link: '/infoscreen',
       icon: Icons.adb_rounded),
   MenuItem(
       title: 'Dispositivos Conectados',
       subTitle: 'Conexion de dispositivos',
-      link: '/infinite',
+      link: '/conexion',
       icon: Icons.connect_without_contact_sharp),  
 ];
