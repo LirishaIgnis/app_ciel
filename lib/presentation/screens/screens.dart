@@ -1,7 +1,7 @@
 
 
 
-//export 'package:app_ciel/presentation/screens/Tablero/tablero_screen.dart';
+export 'package:app_ciel/presentation/screens/Tablero/tablero_screen.dart';
 
 export 'package:app_ciel/presentation/screens/deportes/voleybol_screen/voleybol_screen.dart';
 

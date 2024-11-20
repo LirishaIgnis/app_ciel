@@ -20,10 +20,10 @@ const appMenuItems = <MenuItem>[
       link: '/restaurar',
       icon: Icons.sports_outlined),
   MenuItem(
-      title: 'Configuracion',
-      subTitle: 'Configuración general',
+      title: 'Configuración ',
+      subTitle: ' Configura aqui la informacion de los equipos ',
       link: '/configuracion',
-      icon: Icons.app_settings_alt_rounded),
+      icon: Icons.settings_suggest_rounded),
   MenuItem(
       title: 'Deportes',
       subTitle: 'Seleccionar deporte',
