@@ -30,10 +30,10 @@ environment:
 dependencies:
   animate_do: ^3.3.4
   cupertino_icons: ^1.0.8
+  file_picker: ^8.1.4
   flutter:
     sdk: flutter
   go_router: ^14.6.0
-  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_lints: ^4.0.0
