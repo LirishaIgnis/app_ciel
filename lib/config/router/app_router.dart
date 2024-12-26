@@ -1,6 +1,4 @@
-import 'package:app_ciel/presentation/screens/app_tutorial/app_tutorial_screen.dart';
 import 'package:app_ciel/presentation/screens/app_tutorial/tutorial_screen.dart';
-import 'package:app_ciel/presentation/screens/configuracion/configuracion_general_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:app_ciel/presentation/screens/screens.dart';
 
@@ -44,7 +42,7 @@ final appRouter = GoRouter(
                   ),
                               GoRoute(
                                 path: '/tablero',
-                                builder: (context, state) => const TableroScreen(),
+                                builder: (context, state) => TableroScreen(),
                               ),
     GoRoute(
       path: '/conexion',

@@ -20,7 +20,7 @@ class HomeScreen extends StatelessWidget {
       ),
       body: const _HomeView(),
       floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.settings), 
+        child: const Icon(Icons.app_settings_alt_outlined), 
         onPressed:(){
           context.push('/confgeneral');
         },
