@@ -1,30 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:app_ciel/config/router/app_router.dart';
 import 'package:app_ciel/config/theme/app_theme.dart';
+import 'package:app_ciel/presentation/providers/providers.dart'; // Importa tu archivo de Providers
 
 void main() {
-  runApp(const MainApp());
+  runApp(
+    appProviders(
+      child: const MainApp(), // envuelve tu MainApp con appProviders
+    ),
+  );
 }
 
 class MainApp extends StatelessWidget {
+  const MainApp({super.key});
 
-const MainApp ({super.key});
-
-@override
+  @override
   Widget build(BuildContext context) {
-   return  MaterialApp.router(
-    routerConfig: appRouter,
-    debugShowCheckedModeBanner: false,
-    theme: AppTheme(selectedColor:0 ).getTheme(),
-    
-    
-    //routes: {  Especificacion para navegacion basica entre pantallas. Aqui se crean las rutas para llamarlas en el home_screen
-      
-      //'/configuración' :(context)=>const ConfiguracionScreen(),
-      //'/deportes':(context)=>const DeportesScreen(),    
-    //},  
-    
-     
-   );
+    return MaterialApp.router(
+      routerConfig: appRouter,
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme(selectedColor: 0).getTheme(),
+    );
   }
 }
+

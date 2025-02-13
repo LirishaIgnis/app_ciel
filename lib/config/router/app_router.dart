@@ -42,7 +42,7 @@ final appRouter = GoRouter(
                   ),
                               GoRoute(
                                 path: '/tablero',
-                                builder: (context, state) => TableroScreen(),
+                                builder: (context, state) => GameView(),
                               ),
     GoRoute(
       path: '/conexion',

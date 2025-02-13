@@ -1,289 +1,360 @@
-import 'dart:async';
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
+import 'package:provider/provider.dart';
+import 'package:app_ciel/controllers/game_controller.dart';
+import 'package:app_ciel/controllers/time_controller.dart';
+import 'package:app_ciel/servicios/conexion/bluetooth/bluetooth_service.dart';
 
-class TableroScreen extends StatefulWidget {
+class GameView extends StatefulWidget {
   @override
-  _TableroScreenState createState() => _TableroScreenState();
+  _GameViewState createState() => _GameViewState();
 }
-class _TableroScreenState extends State<TableroScreen> {
-  int puntosLocal = 0;
-  int puntosVisitante = 0;
-  int faltasLocal = 0;
-  int faltasVisitante = 0;
-  int periodo = 1;
 
-  Timer? _timer;
-  int segundos = 0;
-  bool enEjecucion = false;
-
-  void iniciarTimer() {
-    if (enEjecucion) return;
-    enEjecucion = true;
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (mounted) {
-        setState(() {
-          segundos++;
-        });
-      }
-    });
-  }
-
-  void pausarTimer() {
-    _timer?.cancel();
-    enEjecucion = false;
-  }
-
-  void reiniciarTimer() {
-    pausarTimer();
-    setState(() {
-      segundos = 0;
-    });
-  }
-
-  void cambiarPeriodo() {
-    setState(() {
-      periodo++;
-      reiniciarTimer();
-    });
-  }
-
-  String formatearTiempo(int segundosTotales) {
-    final minutos = segundosTotales ~/ 60;
-    final segundos = segundosTotales % 60;
-    return '${minutos.toString().padLeft(2, '0')}:${segundos.toString().padLeft(2, '0')}'
-        .padLeft(5);
-  }
+class _GameViewState extends State<GameView> {
+  BluetoothDevice? _selectedDevice;
+  List<BluetoothDevice> _devices = [];
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
-  dispose() {
-    _timer?.cancel();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _fetchPairedDevices();
+  }
+
+  Future<void> _fetchPairedDevices() async {
+    final devices = await FlutterBluetoothSerial.instance.getBondedDevices();
+    setState(() {
+      _devices = devices;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final gameController = Provider.of<GameController>(context);
+    final timeController = Provider.of<TimeController>(context);
+    final bluetoothService = Provider.of<BluetoothService>(context);
+
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        title: const Text(
-          'Control Tablero Deportivo',
-          style: TextStyle(color: Colors.white),
+        backgroundColor: Colors.blueGrey[900],
+        title: Text("Marcador",
+            style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.menu, size: 30),
+          onPressed: () {
+            _scaffoldKey.currentState?.openDrawer();
+          },
         ),
       ),
-      backgroundColor: Colors.black,
-      body: Padding(
+      drawer: _buildBluetoothMenu(bluetoothService),
+      backgroundColor: Colors.grey[900],
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Contador de tiempo
-            Container(
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                color: Colors.grey[900],
-                borderRadius: BorderRadius.circular(12.0),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    formatearTiempo(segundos),
-                    style: const TextStyle(
-                      fontSize: 48,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+            // Sección del reloj (Tiempo)
+            Text(
+              "${timeController.gameState.minutos}:${timeController.gameState.segundos.toString().padLeft(2, '0')}",
+              style: TextStyle(
+                  fontSize: 80,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white),
+            ),
+            SizedBox(height: 30),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                Flexible(
+                  child: _buildScoreColumn(
+                    "Local",
+                    gameController.gameState.marcadorLocal,
+                    Colors.blue,
+                    gameController.aumentarMarcadorLocal,
+                    gameController.disminuirMarcadorLocal,
                   ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                ),
+                Flexible(
+                  child: Column(
                     children: [
+                      Text("Periodo",
+                          style: TextStyle(fontSize: 30, color: Colors.white)),
+                      SizedBox(height: 5),
+                      Text("${gameController.gameState.periodo}",
+                          style: TextStyle(
+                              fontSize: 60,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white)),
                       ElevatedButton(
+                        onPressed: () {
+                          gameController.cambiarPeriodo();
+                          timeController.reiniciarTiempo(gameController);
+                        },
+                        child:
+                            Text("Siguiente", style: TextStyle(fontSize: 20)),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green.shade300,
+                          backgroundColor: Colors.purple,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15)),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 30, vertical: 15),
                         ),
-                        onPressed: iniciarTimer,
-                        child: const Text('Iniciar'),
-                      ),
-                      const SizedBox(width: 10),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orange.shade300,
-                        ),
-                        onPressed: pausarTimer,
-                        child: const Text('Pausar'),
-                      ),
-                      const SizedBox(width: 10),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red.shade300,
-                        ),
-                        onPressed: reiniciarTimer,
-                        child: const Text('Reiniciar'),
                       ),
                     ],
-                  )
-                ],
-              ),
+                  ),
+                ),
+                Flexible(
+                  child: _buildScoreColumn(
+                    "Visitante",
+                    gameController.gameState.marcadorVisitante,
+                    Colors.red,
+                    gameController.aumentarMarcadorVisitante,
+                    gameController.disminuirMarcadorVisitante,
+                  ),
+                ),
+              ],
             ),
-
-            const SizedBox(height: 20),
-
-            // Marcador de puntos
+            SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                marcadorEquipo('LOCAL', puntosLocal, faltasLocal, true),
-                Text(
-                  'Periodo $periodo',
-                  style: const TextStyle(color: Colors.white, fontSize: 24),
+                Flexible(
+                  child: _buildFoulsColumn(
+                    "Faltas Local",
+                    gameController.gameState.faltasLocal,
+                    Colors.blue,
+                    gameController.aumentarFaltasLocal,
+                    gameController.disminuirFaltasLocal,
+                  ),
                 ),
-                marcadorEquipo('VISITANTE', puntosVisitante, faltasVisitante, false),
+                Flexible(
+                  child: _buildFoulsColumn(
+                    "Faltas Visitante",
+                    gameController.gameState.faltasVisitante,
+                    Colors.red,
+                    gameController.aumentarFaltasVisitante,
+                    gameController.disminuirFaltasVisitante,
+                  ),
+                ),
               ],
             ),
-
-            const SizedBox(height: 20),
-
-            // Controles de puntos, faltas y periodo
-            Container(
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                color: Colors.grey[850],
-                borderRadius: BorderRadius.circular(12.0),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      controlBotones('Puntos Local', () => setState(() {
-                        // Asegurando que los puntos no sean negativos
-                        puntosLocal = puntosLocal + 1;
-                      }), () => setState(() {
-                        // Solo resta si los puntos son mayores que 0
-                        if (puntosLocal > 0) puntosLocal--;
-                      })),
-                      controlBotones('Puntos Visitante', () => setState(() {
-                        puntosVisitante = puntosVisitante + 1;
-                      }), () => setState(() {
-                        // Solo resta si los puntos son mayores que 0
-                        if (puntosVisitante > 0) puntosVisitante--;
-                      })),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      controlBotones('Faltas Local', () => setState(() => faltasLocal++), 
-                          () => setState(() => faltasLocal--)),
-                      controlBotones('Faltas Visitante', 
-                          () => setState(() => faltasVisitante++),
-                          () => setState(() => faltasVisitante--)),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  // Botón para cambiar el periodo
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                        ),
-                        onPressed: cambiarPeriodo,
-                        child: const Text('Cambiar Periodo'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            const Spacer(),
+            SizedBox(height: 30),
+            _buildTimeControlButtons(timeController, gameController),
           ],
         ),
       ),
-
-      // Botones flotantes con tags únicos
-      floatingActionButton: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-            backgroundColor: Colors.white,
-            heroTag: 'settings',  // Tag único para el botón de configuración
-            onPressed: () => Navigator.of(context).pop(),
-            elevation: 6.0,
-            child: const Icon(Icons.settings, color: Colors.black),
-          ),
-          const SizedBox(width: 20),
-          FloatingActionButton(
-            backgroundColor: Colors.white,
-            heroTag: 'home',  // Tag único para el botón de inicio
-            onPressed: () => context.go('/home'),
-            elevation: 6.0,
-            child: const Icon(Icons.home, color: Colors.black),
-          ),
-        ],
+      // FloatingActionButton para regresar al Home
+      floatingActionButton: FloatingActionButton(
+        heroTag:
+            "homeButton", // Importante para evitar conflictos de hero animations
+        onPressed: () {
+          Navigator.pop(context);
+        },
+        backgroundColor: Colors.blue,
+        child: Icon(Icons.arrow_back_ios_outlined, size: 30),
       ),
     );
   }
 
-  Widget marcadorEquipo(String titulo, int puntos, int faltas, bool esLocal) {
+  Widget _buildBluetoothMenu(BluetoothService bluetoothService) {
+    return Drawer(
+      child: Container(
+        color: Colors.blueGrey[800],
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Dispositivos Bluetooth",
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold)),
+            SizedBox(height: 10),
+            DropdownButtonFormField<BluetoothDevice>(
+              dropdownColor: Colors.grey[850],
+              value: _selectedDevice,
+              items: _devices.map((device) {
+                return DropdownMenuItem(
+                  value: device,
+                  child: Text(device.name ?? "Desconocido",
+                      style: TextStyle(color: Colors.white)),
+                );
+              }).toList(),
+              onChanged: (device) {
+                setState(() {
+                  _selectedDevice = device;
+                });
+              },
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.grey[700],
+                labelText: "Seleccionar dispositivo",
+                labelStyle: TextStyle(color: Colors.white),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _selectedDevice != null
+                  ? () =>
+                      bluetoothService.conectarODesconectar(_selectedDevice!)
+                  : null,
+              child: Text(
+                  bluetoothService.isConnected ? "Desconectar" : "Conectar",
+                  style: TextStyle(fontSize: 18)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    bluetoothService.isConnected ? Colors.red : Colors.green,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScoreColumn(String label, int score, Color color,
+      VoidCallback onIncrease, VoidCallback onDecrease) {
     return Column(
       children: [
-        Text(
-          titulo,
-          style: const TextStyle(color: Colors.white, fontSize: 18),
-        ),
-        Container(
-          padding: const EdgeInsets.all(8.0),
-          decoration: BoxDecoration(
-            color: esLocal ? Colors.blue[900] : Colors.red[900],
-            borderRadius: BorderRadius.circular(8.0),
-          ),
-          child: Text(
-            puntos.toString(),
-            style: const TextStyle(
-              fontSize: 48,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+        Text(label,
+            style: TextStyle(
+                fontSize: 25,
+                color: Colors.white,
+                fontWeight: FontWeight.bold)),
+        SizedBox(height: 10),
+        Text("$score",
+            style: TextStyle(
+                fontSize: 70, fontWeight: FontWeight.bold, color: color)),
+        SizedBox(height: 15),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+              onPressed: onIncrease,
+              child: Text("+",
+                  style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: color,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15)),
+                padding: EdgeInsets.symmetric(horizontal: 25, vertical: 10),
+              ),
             ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Faltas: $faltas',
-          style: const TextStyle(color: Colors.white, fontSize: 16),
+            SizedBox(width: 10),
+            ElevatedButton(
+              onPressed: onDecrease,
+              child: Text("-",
+                  style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey[800],
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15)),
+                padding: EdgeInsets.symmetric(horizontal: 25, vertical: 10),
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
 
-  Widget controlBotones(String titulo, VoidCallback onSumar, VoidCallback onRestar) {
+  Widget _buildFoulsColumn(String label, int fouls, Color color,
+      VoidCallback onIncrease, VoidCallback onDecrease) {
     return Column(
       children: [
-        Text(
-          titulo,
-          style: const TextStyle(color: Colors.white, fontSize: 16),
-        ),
+        Text(label,
+            style: TextStyle(
+                fontSize: 25,
+                color: Colors.white,
+                fontWeight: FontWeight.bold)),
+        SizedBox(height: 10),
+        Text("$fouls",
+            style: TextStyle(
+                fontSize: 50, fontWeight: FontWeight.bold, color: color)),
+        SizedBox(height: 10),
         Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ElevatedButton(
+              onPressed: onIncrease,
+              child: Text("+",
+                  style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green.shade200,
+                backgroundColor: color,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15)),
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               ),
-              onPressed: onSumar,
-              child: const Text('+'),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 10),
             ElevatedButton(
+              onPressed: onDecrease,
+              child: Text("-",
+                  style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red.shade200,
+                backgroundColor: Colors.grey[800],
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15)),
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               ),
-              onPressed: onRestar,
-              child: const Text('-'),
             ),
           ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTimeControlButtons(
+      TimeController timeController, GameController gameController) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        ElevatedButton(
+          onPressed: timeController.iniciarTiempo,
+          child: Text("Iniciar", style: TextStyle(fontSize: 20)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.green,
+            foregroundColor: Colors.white,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+            padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+          ),
+        ),
+        SizedBox(width: 15),
+        ElevatedButton(
+          onPressed: timeController.pausarTiempo,
+          child: Text("Pausar", style: TextStyle(fontSize: 20)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.orange,
+            foregroundColor: Colors.white,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+            padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+          ),
+        ),
+        SizedBox(width: 15),
+        ElevatedButton(
+          onPressed: gameController.reiniciarMarcadoresYTiempo,
+          child: Text("Reiniciar", style: TextStyle(fontSize: 20)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.red,
+            foregroundColor: Colors.white,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+            padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+          ),
         ),
       ],
     );
