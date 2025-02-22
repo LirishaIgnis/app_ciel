@@ -1,3 +1,4 @@
+import 'package:app_ciel/presentation/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -16,7 +17,7 @@ class BasketBallScreen extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.sports_basketball),
         onPressed: () {
-          context.push('/tablero');// Acción para iniciar el partido o navegación adicional
+          context.push('/tablero'); // Acción para iniciar el partido o navegación adicional
         },
       ),
     );
@@ -27,20 +28,15 @@ class _BasketballSettingsView extends StatefulWidget {
   const _BasketballSettingsView();
 
   @override
-  State<_BasketballSettingsView> createState() =>
-      _BasketballSettingsViewState();
+  State<_BasketballSettingsView> createState() => _BasketballSettingsViewState();
 }
 
 class _BasketballSettingsViewState extends State<_BasketballSettingsView> {
-  // Datos obtenidos de otra configuración
-  final String homeTeam = 'Equipo Local'; // Simulación de datos
-  final String awayTeam = 'Equipo Visitante'; // Simulación de datos
+  String selectedQuarterCount = '4'; 
+  bool shotClockEnabled = true; 
+  bool reviewEnabled = false; 
 
-  String selectedQuarterCount = '4'; // Cantidad de períodos
-  bool shotClockEnabled = true; // Tiempo de posesión habilitado
-  bool reviewEnabled = false; // Revisiones de jugadas habilitadas
-
-  final quarterOptions = ['4', '2', '6']; // Opciones comunes para períodos
+  final quarterOptions = ['4', '2', '6']; 
 
   @override
   Widget build(BuildContext context) {
@@ -53,14 +49,32 @@ class _BasketballSettingsViewState extends State<_BasketballSettingsView> {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
-          ListTile(
-            leading: const Icon(Icons.sports_basketball),
-            title: Text('Equipo Local: $homeTeam'),
+
+          // ✅ EQUIPO LOCAL
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const _BuildTeamLabel(
+                icon: Icons.sports_basketball, 
+                label: "Equipo Local",
+              ),
+              TeamInfoWidget(isLocal: true, isDarkBackground: false), // Fondo claro
+            ],
           ),
-          ListTile(
-            leading: const Icon(Icons.sports_basketball_outlined),
-            title: Text('Equipo Visitante: $awayTeam'),
+          const SizedBox(height: 10),
+
+          // ✅ EQUIPO VISITANTE
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const _BuildTeamLabel(
+                icon: Icons.sports_basketball_outlined, 
+                label: "Equipo Visitante",
+              ),
+              TeamInfoWidget(isLocal: false, isDarkBackground: false), // Fondo claro
+            ],
           ),
+
           const Divider(),
           const SizedBox(height: 10),
           const Text(
@@ -68,7 +82,7 @@ class _BasketballSettingsViewState extends State<_BasketballSettingsView> {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
-          // Selección de cantidad de períodos
+
           DropdownButtonFormField<String>(
             decoration: const InputDecoration(
               labelText: 'Cantidad de Períodos',
@@ -88,7 +102,7 @@ class _BasketballSettingsViewState extends State<_BasketballSettingsView> {
             },
           ),
           const SizedBox(height: 20),
-          // Switch para habilitar/deshabilitar el tiempo de posesión
+
           SwitchListTile(
             title: const Text('Tiempo de Posesión Habilitado'),
             subtitle: const Text('Activar reloj de posesión (24 segundos)'),
@@ -100,11 +114,10 @@ class _BasketballSettingsViewState extends State<_BasketballSettingsView> {
             },
           ),
           const SizedBox(height: 10),
-          // Switch para habilitar/deshabilitar las revisiones de jugadas
+
           SwitchListTile(
             title: const Text('Habilitar Revisiones de Jugadas'),
-            subtitle:
-                const Text('Permitir revisiones de jugadas en decisiones clave'),
+            subtitle: const Text('Permitir revisiones de jugadas en decisiones clave'),
             value: reviewEnabled,
             onChanged: (value) {
               setState(() {
@@ -113,6 +126,7 @@ class _BasketballSettingsViewState extends State<_BasketballSettingsView> {
             },
           ),
           const SizedBox(height: 30),
+
           Center(
             child: ElevatedButton(
               onPressed: _showSummary,
@@ -132,11 +146,29 @@ class _BasketballSettingsViewState extends State<_BasketballSettingsView> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Equipo Local: $homeTeam'),
-            Text('Equipo Visitante: $awayTeam'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const _BuildTeamLabel(
+                  icon: Icons.sports_basketball, 
+                  label: "Equipo Local",
+                ),
+                TeamInfoWidget(isLocal: true, isDarkBackground: false), 
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const _BuildTeamLabel(
+                  icon: Icons.sports_basketball_outlined, 
+                  label: "Equipo Visitante",
+                ),
+                TeamInfoWidget(isLocal: false, isDarkBackground: false), 
+              ],
+            ),
             Text('Cantidad de Períodos: $selectedQuarterCount'),
-            Text(
-                'Tiempo de Posesión: ${shotClockEnabled ? 'Habilitado' : 'Deshabilitado'}'),
+            Text('Tiempo de Posesión: ${shotClockEnabled ? 'Habilitado' : 'Deshabilitado'}'),
             Text('Revisiones de Jugadas: ${reviewEnabled ? 'Habilitadas' : 'Deshabilitadas'}'),
           ],
         ),
@@ -149,6 +181,25 @@ class _BasketballSettingsViewState extends State<_BasketballSettingsView> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// ✅ WIDGET PARA MOSTRAR TEXTO + ÍCONO DEL EQUIPO (IZQUIERDA)
+class _BuildTeamLabel extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _BuildTeamLabel({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.grey.shade700),
+        const SizedBox(width: 8),
+        Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+      ],
     );
   }
 }

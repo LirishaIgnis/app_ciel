@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../models/game_state.dart';
@@ -7,6 +8,8 @@ class GameController extends ChangeNotifier {
   final GameState _gameState;
   final BluetoothService _bluetoothService;
   bool _bitOscilacion = false; // Alterna entre 6 y 2
+  Timer? _timerTiempoMuertoLocal;
+  Timer? _timerTiempoMuertoVisitante;
 
   GameController(this._gameState, this._bluetoothService);
 
@@ -15,13 +18,11 @@ class GameController extends ChangeNotifier {
   /// **Actualiza y envía la trama estándar**
   void _actualizarTrama() {
     _bitOscilacion = !_bitOscilacion; // Alternar entre 6 y 2
-
-    // Generar la trama correctamente codificada y enviarla
     Uint8List trama = _gameState.generarTramaEstadoPartido(_bitOscilacion ? 6 : 2);
     _bluetoothService.enviarTrama(trama);
   }
 
-  /// **Genera y envía la trama de faltas tomando los datos actuales del estado del juego**
+  /// **Genera y envía la trama de faltas**
   void _enviarTramaFaltas() {
     Uint8List tramaFaltas = _gameState.generarTramaFaltas(
       bitOscilacion: _bitOscilacion ? 6 : 2,
@@ -58,7 +59,7 @@ class GameController extends ChangeNotifier {
     }
   }
 
-  // *** Funciones para modificar las faltas y enviar la trama de faltas ***
+  // *** Funciones para modificar las faltas ***
   void aumentarFaltasLocal() {
     _gameState.faltasLocal++;
     notifyListeners();
@@ -106,5 +107,73 @@ class GameController extends ChangeNotifier {
     _gameState.faltasVisitante = 0;
     notifyListeners();
     _actualizarTrama();
+  }
+
+  // *** 🚀 IMPLEMENTACIÓN DEL TIEMPO MUERTO ***
+
+  /// **Inicia el tiempo muerto para el equipo local**
+  void iniciarTiempoMuertoLocal() {
+    if (_gameState.tiempoMuertoActivoLocal) return; // Si ya está activo, no hacer nada
+
+    _gameState.tiempoMuertoActivoLocal = true;
+    _gameState.tiempoMuertoLocal = 60;
+    notifyListeners();
+
+    // Enviar la trama de inicio de sonido del tiempo muerto
+    _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoInicio());
+
+    // Iniciar el conteo regresivo del tiempo muerto
+    _timerTiempoMuertoLocal = Timer.periodic(Duration(seconds: 1), (timer) {
+      if (_gameState.tiempoMuertoLocal == 59) {
+        _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoFin());
+      }
+
+      if (_gameState.tiempoMuertoLocal > 0) {
+        _gameState.tiempoMuertoLocal--;
+      } else {
+        // Al llegar a 0, finaliza el tiempo muerto y retoma la trama normal
+        _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoInicio());
+        Future.delayed(Duration(seconds: 1), () {
+          _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoFin());
+          _gameState.tiempoMuertoActivoLocal = false;
+          _timerTiempoMuertoLocal?.cancel();
+          _actualizarTrama();
+        });
+      }
+      notifyListeners();
+    });
+  }
+
+  /// **Inicia el tiempo muerto para el equipo visitante**
+  void iniciarTiempoMuertoVisitante() {
+    if (_gameState.tiempoMuertoActivoVisitante) return;
+
+    _gameState.tiempoMuertoActivoVisitante = true;
+    _gameState.tiempoMuertoVisitante = 60;
+    notifyListeners();
+
+    // Enviar la trama de inicio de sonido del tiempo muerto
+    _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoInicio());
+
+    // Iniciar el conteo regresivo del tiempo muerto
+    _timerTiempoMuertoVisitante = Timer.periodic(Duration(seconds: 1), (timer) {
+      if (_gameState.tiempoMuertoVisitante == 59) {
+        _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoFin());
+      }
+
+      if (_gameState.tiempoMuertoVisitante > 0) {
+        _gameState.tiempoMuertoVisitante--;
+      } else {
+        // Al llegar a 0, finaliza el tiempo muerto y retoma la trama normal
+        _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoInicio());
+        Future.delayed(Duration(seconds: 1), () {
+          _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoFin());
+          _gameState.tiempoMuertoActivoVisitante = false;
+          _timerTiempoMuertoVisitante?.cancel();
+          _actualizarTrama();
+        });
+      }
+      notifyListeners();
+    });
   }
 }
