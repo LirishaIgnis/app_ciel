@@ -109,7 +109,7 @@ class GameController extends ChangeNotifier {
     _actualizarTrama();
   }
 
-  // *** 🚀 IMPLEMENTACIÓN DEL TIEMPO MUERTO ***
+  // ***  IMPLEMENTACIÓN DEL TIEMPO MUERTO ***
 
   /// **Inicia el tiempo muerto para el equipo local**
   void iniciarTiempoMuertoLocal() {

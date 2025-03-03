@@ -1,6 +1,8 @@
 
 
 
+export 'package:app_ciel/presentation/screens/deportes/basketball_screen/basketball_config_test_screen.dart';
+
 export 'package:app_ciel/presentation/screens/configuracion/configuracion_general_screen.dart';
 
 export 'package:app_ciel/presentation/screens/app_tutorial/app_tutorial_screen.dart';

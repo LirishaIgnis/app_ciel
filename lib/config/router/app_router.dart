@@ -31,6 +31,10 @@ final appRouter = GoRouter(
                     path: '/basketball',
                     builder: (context, state) => const BasketBallScreen(),
                   ),
+                          GoRoute(
+                                  path: '/test-basketball-config',
+                                  builder: (context, state) => const BasketballConfigTestScreen(),
+                          ),
                   
                   GoRoute(
                     path: '/futbol',

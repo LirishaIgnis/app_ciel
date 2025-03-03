@@ -39,7 +39,7 @@ class _TeamInfoWidgetState extends State<TeamInfoWidget> {
 
   @override
   Widget build(BuildContext context) {
-    // **📌 Ajuste de color del texto dependiendo del fondo**
+    // ** Ajuste de color del texto dependiendo del fondo**
     Color textColor = widget.isDarkBackground ? Colors.white : Colors.black;
 
     return Row(
