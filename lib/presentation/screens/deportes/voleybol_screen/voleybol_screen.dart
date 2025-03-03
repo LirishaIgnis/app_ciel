@@ -1,3 +1,5 @@
+import 'package:app_ciel/presentation/widgets/widgets.dart';
+import 'package:app_ciel/servicios/data/sports_config_service.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -13,16 +15,32 @@ class VoleybolScreen extends StatelessWidget {
         title: const Text('Configuración de Partido de Vóleybol'),
       ),
       body: const _VoleybolSettingsView(),
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.sports_volleyball),
-        onPressed: () {
-          context.push('/tablero');
-          // Acción para iniciar el partido o navegación adicional
-        },
+
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat, // Posición
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min, 
+        children: [
+          FloatingActionButton(
+            heroTag: "btnv1", 
+            child: const Icon(Icons.settings),
+            onPressed: () {
+              context.push('/test-voleybol-config'); 
+            },
+          ),
+          const SizedBox(height: 16),
+          FloatingActionButton(
+            heroTag: "btnv2", 
+            child: const Icon(Icons.sports_volleyball),
+            onPressed: () {
+              context.push('/tablero'); 
+            },
+          ),
+        ],        
       ),
     );
   }
 }
+
 
 class _VoleybolSettingsView extends StatefulWidget {
   const _VoleybolSettingsView();
@@ -32,18 +50,42 @@ class _VoleybolSettingsView extends StatefulWidget {
 }
 
 class _VoleybolSettingsViewState extends State<_VoleybolSettingsView> {
-  // Datos obtenidos de otra configuración
-  final String homeTeam = 'Equipo Local'; // Simulación de datos
-  final String awayTeam = 'Equipo Visitante'; // Simulación de datos
+  final SportsConfigService _configService = SportsConfigService();
 
-  int numberOfSets = 3; // Número de sets
-  int pointsPerSet = 25; // Puntos por set
-  bool timeOutEnabled = true; // Habilitar tiempo muerto
-  String serveType = 'Rotación'; // Tipo de servicio (Rotación o el tipo de saque)
+  String selectedSetCount = '5'; 
+  String selectedPointsPerSet = '25'; 
+  int minimumDifference = 2; // ✅ Ahora se carga desde Hive
 
-  final setOptions = [3, 5]; // Opciones para la cantidad de sets
-  final pointOptions = [15, 20, 25]; // Opciones para los puntos por set
-  final serveOptions = ['Rotación', 'Saque de pie']; // Opciones de tipo de saque
+  final List<String> setOptions = ['3', '5']; 
+  final List<String> pointOptions = ['15', '20', '25']; 
+
+  @override
+  void initState() {
+    super.initState();
+    _loadConfig(); 
+  }
+
+  Future<void> _loadConfig() async {
+    final config = await _configService.getConfig("volleyball");
+    setState(() {
+      selectedSetCount = setOptions.contains(config["sets"].toString()) 
+          ? config["sets"].toString() 
+          : '5'; 
+      selectedPointsPerSet = pointOptions.contains(config["points_per_set"].toString()) 
+          ? config["points_per_set"].toString() 
+          : '25';
+      minimumDifference = config["minimum_difference"] ?? 2; // ✅ Se carga desde Hive
+    });
+  }
+
+  Future<void> _saveConfig() async {
+    final config = {
+      "sets": int.parse(selectedSetCount),
+      "points_per_set": int.parse(selectedPointsPerSet),
+      "minimum_difference": minimumDifference,
+    };
+    await _configService.saveConfig("volleyball", config);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,14 +98,32 @@ class _VoleybolSettingsViewState extends State<_VoleybolSettingsView> {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
-          ListTile(
-            leading: const Icon(Icons.sports_volleyball),
-            title: Text('Equipo Local: $homeTeam'),
+
+          // ✅ EQUIPO LOCAL
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const _BuildTeamLabel(
+                icon: Icons.sports_volleyball, 
+                label: "Equipo Local",
+              ),
+              TeamInfoWidget(isLocal: true, isDarkBackground: false), 
+            ],
           ),
-          ListTile(
-            leading: const Icon(Icons.sports_volleyball_outlined),
-            title: Text('Equipo Visitante: $awayTeam'),
+          const SizedBox(height: 10),
+
+          // ✅ EQUIPO VISITANTE
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const _BuildTeamLabel(
+                icon: Icons.sports_volleyball_outlined, 
+                label: "Equipo Visitante",
+              ),
+              TeamInfoWidget(isLocal: false, isDarkBackground: false), 
+            ],
           ),
+
           const Divider(),
           const SizedBox(height: 10),
           const Text(
@@ -71,13 +131,13 @@ class _VoleybolSettingsViewState extends State<_VoleybolSettingsView> {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
-          // Número de sets
-          DropdownButtonFormField<int>(
+
+          DropdownButtonFormField<String>(
             decoration: const InputDecoration(
               labelText: 'Número de Sets',
               border: OutlineInputBorder(),
             ),
-            value: numberOfSets,
+            value: selectedSetCount,
             items: setOptions
                 .map((option) => DropdownMenuItem(
                       value: option,
@@ -86,18 +146,19 @@ class _VoleybolSettingsViewState extends State<_VoleybolSettingsView> {
                 .toList(),
             onChanged: (value) {
               setState(() {
-                numberOfSets = value!;
+                selectedSetCount = value!;
               });
+              _saveConfig(); 
             },
           ),
           const SizedBox(height: 20),
-          // Puntos por set
-          DropdownButtonFormField<int>(
+
+          DropdownButtonFormField<String>(
             decoration: const InputDecoration(
               labelText: 'Puntos por Set',
               border: OutlineInputBorder(),
             ),
-            value: pointsPerSet,
+            value: selectedPointsPerSet,
             items: pointOptions
                 .map((option) => DropdownMenuItem(
                       value: option,
@@ -106,43 +167,27 @@ class _VoleybolSettingsViewState extends State<_VoleybolSettingsView> {
                 .toList(),
             onChanged: (value) {
               setState(() {
-                pointsPerSet = value!;
+                selectedPointsPerSet = value!;
               });
+              _saveConfig(); 
             },
           ),
           const SizedBox(height: 20),
-          // Switch para habilitar/deshabilitar el tiempo muerto
-          SwitchListTile(
-            title: const Text('Tiempo Muerto Habilitado'),
-            subtitle: const Text('Permitir tiempos muertos durante el partido'),
-            value: timeOutEnabled,
-            onChanged: (value) {
-              setState(() {
-                timeOutEnabled = value;
-              });
-            },
+
+          // ✅ Se muestra la diferencia mínima de puntos
+          Text(
+            'Diferencia mínima de puntos: $minimumDifference',
+            style: const TextStyle(fontSize: 16),
           ),
-          const SizedBox(height: 20),
-          // Selección de tipo de saque
-          DropdownButtonFormField<String>(
-            decoration: const InputDecoration(
-              labelText: 'Tipo de Saque',
-              border: OutlineInputBorder(),
-            ),
-            value: serveType,
-            items: serveOptions
-                .map((option) => DropdownMenuItem(
-                      value: option,
-                      child: Text(option),
-                    ))
-                .toList(),
-            onChanged: (value) {
-              setState(() {
-                serveType = value!;
-              });
-            },
+          const SizedBox(height: 10),
+
+          // ✅ Se mantiene el número de tiempos fuera por set
+          const Text(
+            'Tiempos Fuera: 2 por set',
+            style: TextStyle(fontSize: 16),
           ),
           const SizedBox(height: 30),
+
           Center(
             child: ElevatedButton(
               onPressed: _showSummary,
@@ -162,12 +207,10 @@ class _VoleybolSettingsViewState extends State<_VoleybolSettingsView> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Equipo Local: $homeTeam'),
-            Text('Equipo Visitante: $awayTeam'),
-            Text('Número de Sets: $numberOfSets'),
-            Text('Puntos por Set: $pointsPerSet'),
-            Text('Tiempo Muerto: ${timeOutEnabled ? 'Habilitado' : 'Deshabilitado'}'),
-            Text('Tipo de Saque: $serveType'),
+            Text('Número de Sets: $selectedSetCount'),
+            Text('Puntos por Set: $selectedPointsPerSet'),
+            Text('Diferencia mínima de puntos: $minimumDifference'),
+            Text('Tiempos Fuera: 2 por set'),
           ],
         ),
         actions: [
@@ -179,6 +222,25 @@ class _VoleybolSettingsViewState extends State<_VoleybolSettingsView> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// ✅ WIDGET PARA MOSTRAR TEXTO + ÍCONO DEL EQUIPO (IZQUIERDA)
+class _BuildTeamLabel extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _BuildTeamLabel({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.grey.shade700),
+        const SizedBox(width: 8),
+        Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+      ],
     );
   }
 }

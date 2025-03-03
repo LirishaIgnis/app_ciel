@@ -1,4 +1,6 @@
 import 'package:app_ciel/presentation/screens/app_tutorial/tutorial_screen.dart';
+import 'package:app_ciel/presentation/screens/deportes/futbol_screen/soccer_config_test_screen.dart';
+import 'package:app_ciel/presentation/screens/deportes/voleybol_screen/voleybol_config_test_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:app_ciel/presentation/screens/screens.dart';
 
@@ -40,10 +42,20 @@ final appRouter = GoRouter(
                     path: '/futbol',
                     builder: (context, state) => const FutbolScreen(),
                   ),
+                          GoRoute(
+                                  path: '/test-soccer-config',
+                                  builder: (context, state) => const SoccerConfigTestScreen(),
+                          ),
                   GoRoute(
                     path: '/voleybol',
                     builder: (context, state) => const VoleybolScreen(),
                   ),
+                        GoRoute(
+                                  path: '/test-voleybol-config',
+                                  builder: (context, state) => const VolleyballConfigTestScreen(),
+                          ),     
+
+                
                               GoRoute(
                                 path: '/tablero',
                                 builder: (context, state) => GameView(),

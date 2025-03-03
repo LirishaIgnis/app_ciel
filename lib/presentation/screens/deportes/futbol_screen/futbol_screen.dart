@@ -1,3 +1,5 @@
+import 'package:app_ciel/presentation/widgets/widgets.dart';
+import 'package:app_ciel/servicios/data/sports_config_service.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -13,17 +15,36 @@ class FutbolScreen extends StatelessWidget {
         title: const Text('Configuración de Partido de Fútbol'),
       ),
       body: const _FutbolSettingsView(),
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.sports_soccer),
-        onPressed: () {
-          context.push('/tablero');
-          // Acción para iniciar el partido o navegación adicional
-        },
+
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat, // Posición
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min, 
+        children: [
+          FloatingActionButton(
+            heroTag: "btnf1", 
+            child: const Icon(Icons.settings),
+            onPressed: () {
+              context.push('/test-soccer-config'); 
+            },
+          ),
+          const SizedBox(height: 16),
+          FloatingActionButton(
+            heroTag: "btnf2", 
+            child: const Icon(Icons.sports_soccer),
+            onPressed: () {
+              context.push('/tablero'); 
+            },
+          ),
+        ],        
       ),
     );
   }
 }
 
+
+
+
+  
 class _FutbolSettingsView extends StatefulWidget {
   const _FutbolSettingsView();
 
@@ -32,16 +53,37 @@ class _FutbolSettingsView extends StatefulWidget {
 }
 
 class _FutbolSettingsViewState extends State<_FutbolSettingsView> {
-  // Datos obtenidos de otra configuración
-  final String homeTeam = 'Equipo Local'; // Simulación de datos
-  final String awayTeam = 'Equipo Visitante'; // Simulación de datos
+  final SportsConfigService _configService = SportsConfigService();
 
-  String selectedHalfTime = '45'; // Duración de los tiempos
-  bool extraTimeEnabled = false; // Tiempo extra habilitado
-  bool penaltyShootoutEnabled = false; // Penales habilitados
-  bool varEnabled = false; // VAR habilitado
+  String selectedHalfTime = '45'; 
+  bool extraTimeEnabled = false; 
 
-  final halfTimeOptions = ['45', '30']; // Opciones comunes para duraciones
+  final halfTimeOptions = ['45', '30']; 
+
+  @override
+  void initState() {
+    super.initState();
+    _loadConfig(); 
+  }
+
+  Future<void> _loadConfig() async {
+    final config = await _configService.getConfig("soccer");
+    setState(() {
+      selectedHalfTime = halfTimeOptions.contains(config["time_per_half"].toString()) 
+          ? config["time_per_half"].toString() 
+          : '45'; 
+      extraTimeEnabled = config["extra_time_enabled"] ?? false; 
+    });
+  }
+
+  Future<void> _saveConfig() async {
+    final config = {
+      "halves": 2, 
+      "time_per_half": int.parse(selectedHalfTime),
+      "extra_time_enabled": extraTimeEnabled,
+    };
+    await _configService.saveConfig("soccer", config);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,14 +96,32 @@ class _FutbolSettingsViewState extends State<_FutbolSettingsView> {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
-          ListTile(
-            leading: const Icon(Icons.sports_soccer),
-            title: Text('Equipo Local: $homeTeam'),
+
+          //  EQUIPO LOCAL
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const _BuildTeamLabel(
+                icon: Icons.sports_soccer, 
+                label: "Equipo Local",
+              ),
+              TeamInfoWidget(isLocal: true, isDarkBackground: false), 
+            ],
           ),
-          ListTile(
-            leading: const Icon(Icons.support),
-            title: Text('Equipo Visitante: $awayTeam'),
+          const SizedBox(height: 10),
+
+          //  EQUIPO VISITANTE
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const _BuildTeamLabel(
+                icon: Icons.sports_soccer_outlined, 
+                label: "Equipo Visitante",
+              ),
+              TeamInfoWidget(isLocal: false, isDarkBackground: false), 
+            ],
           ),
+
           const Divider(),
           const SizedBox(height: 10),
           const Text(
@@ -69,7 +129,7 @@ class _FutbolSettingsViewState extends State<_FutbolSettingsView> {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
-          // Selección de duración de los tiempos
+
           DropdownButtonFormField<String>(
             decoration: const InputDecoration(
               labelText: 'Duración de los Tiempos (Minutos)',
@@ -86,10 +146,11 @@ class _FutbolSettingsViewState extends State<_FutbolSettingsView> {
               setState(() {
                 selectedHalfTime = value!;
               });
+              _saveConfig(); 
             },
           ),
           const SizedBox(height: 20),
-          // Switch para habilitar/deshabilitar el tiempo extra
+
           SwitchListTile(
             title: const Text('Tiempo Extra Habilitado'),
             subtitle: const Text('Permitir tiempo extra en caso de empate'),
@@ -98,33 +159,11 @@ class _FutbolSettingsViewState extends State<_FutbolSettingsView> {
               setState(() {
                 extraTimeEnabled = value;
               });
-            },
-          ),
-          const SizedBox(height: 10),
-          // Switch para habilitar/deshabilitar los penales
-          SwitchListTile(
-            title: const Text('Penales Habilitados'),
-            subtitle: const Text('Permitir penales en caso de empate tras tiempo extra'),
-            value: penaltyShootoutEnabled,
-            onChanged: (value) {
-              setState(() {
-                penaltyShootoutEnabled = value;
-              });
-            },
-          ),
-          const SizedBox(height: 10),
-          // Switch para habilitar/deshabilitar el VAR
-          SwitchListTile(
-            title: const Text('VAR Habilitado'),
-            subtitle: const Text('Permitir el uso del VAR (Revisión de jugadas)'),
-            value: varEnabled,
-            onChanged: (value) {
-              setState(() {
-                varEnabled = value;
-              });
+              _saveConfig(); 
             },
           ),
           const SizedBox(height: 30),
+
           Center(
             child: ElevatedButton(
               onPressed: _showSummary,
@@ -144,14 +183,8 @@ class _FutbolSettingsViewState extends State<_FutbolSettingsView> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Equipo Local: $homeTeam'),
-            Text('Equipo Visitante: $awayTeam'),
             Text('Duración de los Tiempos: $selectedHalfTime minutos'),
-            Text(
-                'Tiempo Extra: ${extraTimeEnabled ? 'Habilitado' : 'Deshabilitado'}'),
-            Text(
-                'Penales: ${penaltyShootoutEnabled ? 'Habilitados' : 'Deshabilitados'}'),
-            Text('VAR: ${varEnabled ? 'Habilitado' : 'Deshabilitado'}'),
+            Text('Tiempo Extra: ${extraTimeEnabled ? 'Habilitado' : 'Deshabilitado'}'),
           ],
         ),
         actions: [
@@ -166,3 +199,23 @@ class _FutbolSettingsViewState extends State<_FutbolSettingsView> {
     );
   }
 }
+
+/// ✅ WIDGET PARA MOSTRAR TEXTO + ÍCONO DEL EQUIPO (IZQUIERDA)
+class _BuildTeamLabel extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _BuildTeamLabel({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.grey.shade700),
+        const SizedBox(width: 8),
+        Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+      ],
+    );
+  }
+}
+
