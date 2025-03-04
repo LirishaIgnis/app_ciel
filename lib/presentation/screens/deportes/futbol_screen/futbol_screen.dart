@@ -32,7 +32,7 @@ class FutbolScreen extends StatelessWidget {
             heroTag: "btnf2", 
             child: const Icon(Icons.sports_soccer),
             onPressed: () {
-              context.push('/tablero'); 
+              context.push('/tablero', extra: "soccer"); // parametro de deporte 
             },
           ),
         ],        

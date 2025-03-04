@@ -6,44 +6,53 @@ class TimeControls extends StatelessWidget {
   final TimeController timeController;
   final GameController gameController;
 
-  TimeControls(this.timeController, this.gameController);
+  const TimeControls(this.timeController, this.gameController, {Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
       children: [
-        ElevatedButton(
-          onPressed: timeController.iniciarTiempo,
-          child: Text("Iniciar", style: TextStyle(fontSize: 20)),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.green,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-            padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+        if (!timeController.configCargada)
+          const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: CircularProgressIndicator(), // ⏳ Indica que la configuración está cargando
           ),
-        ),
-        SizedBox(width: 15),
-        ElevatedButton(
-          onPressed: timeController.pausarTiempo,
-          child: Text("Pausar", style: TextStyle(fontSize: 20)),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.orange,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-            padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-          ),
-        ),
-        SizedBox(width: 15),
-        ElevatedButton(
-          onPressed: () => _confirmarReinicio(context),
-          child: Text("Reiniciar", style: TextStyle(fontSize: 20)),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-            padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+              onPressed: timeController.configCargada ? timeController.iniciarTiempo : null, // ❌ Bloquea si no está cargado
+              child: const Text("Iniciar", style: TextStyle(fontSize: 20)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: timeController.configCargada ? Colors.green : Colors.grey, // 🔹 Deshabilitado si no hay config
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+              ),
+            ),
+            const SizedBox(width: 15),
+            ElevatedButton(
+              onPressed: timeController.pausarTiempo,
+              child: const Text("Pausar", style: TextStyle(fontSize: 20)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+              ),
+            ),
+            const SizedBox(width: 15),
+            ElevatedButton(
+              onPressed: () => _confirmarReinicio(context),
+              child: const Text("Reiniciar", style: TextStyle(fontSize: 20)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -54,19 +63,19 @@ class TimeControls extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Confirmación"),
-          content: Text("¿Seguro que quieres reiniciar los marcadores?"),
+          title: const Text("Confirmación"),
+          content: const Text("¿Seguro que quieres reiniciar los marcadores?"),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text("Cancelar"),
+              child: const Text("Cancelar"),
             ),
             TextButton(
               onPressed: () {
                 gameController.reiniciarMarcadoresYTiempo();
                 Navigator.of(context).pop();
               },
-              child: Text("Reiniciar"),
+              child: const Text("Reiniciar"),
             ),
           ],
         );

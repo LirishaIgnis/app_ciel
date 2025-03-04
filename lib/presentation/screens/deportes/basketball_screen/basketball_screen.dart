@@ -32,7 +32,7 @@ class BasketBallScreen extends StatelessWidget {
             heroTag: "btn2", 
             child: const Icon(Icons.sports_basketball),
             onPressed: () {
-              context.push('/tablero'); 
+              context.push('/tablero', extra: "basketball"); // parametro de deporte 
             },
           ),
         ],        

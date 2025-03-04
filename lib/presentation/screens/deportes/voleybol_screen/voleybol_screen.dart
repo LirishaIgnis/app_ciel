@@ -32,7 +32,7 @@ class VoleybolScreen extends StatelessWidget {
             heroTag: "btnv2", 
             child: const Icon(Icons.sports_volleyball),
             onPressed: () {
-              context.push('/tablero'); 
+              context.push('/tablero', extra: "volleyball"); // parametro de deporte  
             },
           ),
         ],        

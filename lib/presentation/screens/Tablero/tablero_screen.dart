@@ -6,6 +6,10 @@ import 'package:app_ciel/controllers/time_controller.dart';
 import 'package:app_ciel/servicios/conexion/bluetooth/bluetooth_service.dart';
 
 class GameView extends StatefulWidget {
+  final String deporte; // ✅ Recibe el deporte
+
+  const GameView({required this.deporte, Key? key}) : super(key: key);
+
   @override
   _GameViewState createState() => _GameViewState();
 }
@@ -13,6 +17,13 @@ class GameView extends StatefulWidget {
 class _GameViewState extends State<GameView> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
+@override
+void initState() {
+  super.initState();
+  debugPrint("🚀 GameView iniciado para el deporte: ${widget.deporte}");
+  final timeController = Provider.of<TimeController>(context, listen: false);
+  timeController.cargarConfiguracion(widget.deporte); // ✅ Cargar la configuración aquí
+}
   @override
   Widget build(BuildContext context) {
     final gameController = Provider.of<GameController>(context);
@@ -23,7 +34,10 @@ class _GameViewState extends State<GameView> {
       key: _scaffoldKey,
       appBar: AppBar(
         backgroundColor: Colors.blue[300],
-        title: const Text("Marcador", style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+        title: Text(
+          "Marcador - ${widget.deporte.toUpperCase()}",
+          style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.menu, size: 30),
@@ -33,16 +47,13 @@ class _GameViewState extends State<GameView> {
         ),
       ),
       drawer: BluetoothMenu(bluetoothService: bluetoothService),
-      backgroundColor: Colors.black, // 🔹 Se mantiene el fondo oscuro para mayor contraste
+      backgroundColor: Colors.black,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // 🕒 Sección del Reloj (Centrado y con espacio inferior)
             ClockWidget(timeController),
-            const SizedBox(height: 20), 
-
-            // 📌 Sección de Equipos y Marcador (Compacto)
+            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -65,9 +76,7 @@ class _GameViewState extends State<GameView> {
                 ),
               ],
             ),
-            const SizedBox(height: 20), 
-
-            // 🚨 Sección de Faltas (Centrada)
+            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -76,18 +85,12 @@ class _GameViewState extends State<GameView> {
               ],
             ),
             const SizedBox(height: 20),
-
-            // ⏳ Sección de Tiempos Muertos
             TimeoutWidget(gameController),
             const SizedBox(height: 20),
-
-            // 🎮 Controles de Tiempo
             TimeControls(timeController, gameController),
           ],
         ),
       ),
-      
-      // 🔙 Botón de regreso al Home
       floatingActionButton: FloatingActionButton(
         heroTag: "homeButton",
         onPressed: () {
@@ -99,4 +102,3 @@ class _GameViewState extends State<GameView> {
     );
   }
 }
-

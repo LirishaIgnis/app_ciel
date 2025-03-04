@@ -58,7 +58,10 @@ final appRouter = GoRouter(
                 
                               GoRoute(
                                 path: '/tablero',
-                                builder: (context, state) => GameView(),
+                                builder: (context, state) {
+                                  final String deporte = state.extra as String? ?? "basketball"; // Valor predeterminado
+                                  return GameView(deporte: deporte);
+                                },
                               ),
     GoRoute(
       path: '/conexion',
