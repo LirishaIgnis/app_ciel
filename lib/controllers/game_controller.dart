@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
+import 'package:app_ciel/controllers/time_controller.dart';
 import 'package:flutter/material.dart';
 import '../models/game_state.dart';
 import '../servicios/conexion/bluetooth/bluetooth_service.dart';
@@ -90,13 +91,22 @@ class GameController extends ChangeNotifier {
   }
 
   // *** Función para cambiar el periodo ***
-  void cambiarPeriodo() {
+  void cambiarPeriodo(TimeController timeController) {
+  if (_gameState.periodo < timeController.totalPeriodos) {
     _gameState.periodo++;
-    _gameState.minutos = 0;
+    _gameState.minutos = timeController.duracionPeriodo; // ✅ Restablece el tiempo correctamente
     _gameState.segundos = 0;
+    
+    debugPrint("🔄 Nuevo período ${_gameState.periodo} de ${timeController.totalPeriodos} iniciado.");
+
     notifyListeners();
     _actualizarTrama();
+  } else {
+    debugPrint("⚠️ No se puede avanzar. Ya se alcanzó el período máximo: ${timeController.totalPeriodos}.");
   }
+}
+
+
 
   // *** Función para reiniciar los marcadores y el tiempo ***
   void reiniciarMarcadoresYTiempo() {

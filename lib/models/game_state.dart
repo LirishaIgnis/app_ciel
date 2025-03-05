@@ -25,6 +25,27 @@ class GameState {
     this.faltasVisitante = 0,
   });
 
+    /// **Genera la trama de nombres de equipo**
+  Uint8List generarTramaNombreEquipo({required bool esLocal, required String nombreEquipo}) {
+    String etiqueta = esLocal ? "ZF0" : "ZF1"; // Local: ZF1, Visitante: ZF0
+
+    // 🔹 Asegurar que el nombre no tenga más de 12 caracteres
+    nombreEquipo = nombreEquipo.padRight(12).substring(0, 12); 
+
+    List<int> trama = [
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, // Bytes iniciales
+      ...etiqueta.codeUnits, // 🔹 Insertar "ZF1" o "ZF0"
+      0x02, 0x41, 0x42,  // 🔹 "AB" en ASCII
+      0x1B, 0x30, 0x62,  // 🔹 Bytes de formato
+      0x1A, 0x31, 0x0E, 0x32, // 🔹 Más bytes fijos
+      ...nombreEquipo.codeUnits, // 🔹 Insertar nombre del equipo en ASCII
+      0x04 // Fin de trama
+    ];
+
+    return Uint8List.fromList(trama);
+  }
+
+
   /// **Función para convertir un valor decimal al formato hexadecimal especificado**
   int convertirDecimalAHex(int valor) {
     int parteEntera = valor ~/ 10;
@@ -110,3 +131,4 @@ class GameState {
     ]);
   }
 }
+
