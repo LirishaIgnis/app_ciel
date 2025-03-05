@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:app_ciel/controllers/game_controller.dart';
 import 'package:app_ciel/controllers/time_controller.dart';
 
@@ -25,7 +26,7 @@ class PeriodWidget extends StatelessWidget {
               gameController.cambiarPeriodo(timeController);
               timeController.reiniciarTiempo(gameController);
             } else {
-              _mostrarAlerta(context); // ✅ Mostrar alerta si se supera el límite
+              _mostrarAlerta(context, gameController);
             }
           },
           child: Text("Siguiente", style: TextStyle(fontSize: 20)),
@@ -41,17 +42,19 @@ class PeriodWidget extends StatelessWidget {
     );
   }
 
-  /// ** Función para mostrar la alerta**
-  void _mostrarAlerta(BuildContext context) {
+  /// **📌 Función para mostrar la alerta y bloquear la pantalla**
+  void _mostrarAlerta(BuildContext context, GameController gameController) {
     showDialog(
       context: context,
+      barrierDismissible: false, // 🔹 Evita que se cierre al tocar fuera de la alerta
       builder: (ctx) => AlertDialog(
         title: Text("⚠️ Fin del Partido"),
         content: Text("El partido ha terminado. No se pueden agregar más períodos."),
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.of(ctx).pop();
+              context.push('/deportes');
+              gameController.reiniciarPeriodo(); // 🔹 Reiniciar período al salir del tablero
             },
             child: Text("Aceptar"),
           ),
@@ -60,4 +63,5 @@ class PeriodWidget extends StatelessWidget {
     );
   }
 }
+
 

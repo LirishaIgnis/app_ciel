@@ -106,6 +106,13 @@ class GameController extends ChangeNotifier {
   }
 }
 
+void reiniciarPeriodo() {
+  _gameState.periodo = 1; // 🔹 Reiniciar el período a 1
+  _gameState.minutos = 0;
+  _gameState.segundos = 0;
+  notifyListeners();
+  debugPrint("🔄 Reinicio de períodos al salir del tablero.");
+}
 
 
   // *** Función para reiniciar los marcadores y el tiempo ***
