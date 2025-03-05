@@ -63,28 +63,35 @@ class TimeController extends ChangeNotifier {
   }
 
   void iniciarTiempo() {
-    debugPrint("📢 Intentando iniciar tiempo...");
+  debugPrint("📢 Intentando iniciar tiempo...");
 
-    if (!_configCargada) {
-      debugPrint("❌ ERROR: No se ha cargado la configuración antes de iniciar el tiempo.");
-      return;
-    }
+  if (!_configCargada) {
+    debugPrint("❌ ERROR: No se ha cargado la configuración antes de iniciar el tiempo.");
+    return;
+  }
 
-    if (_tramaTimer == null && _relojTimer == null) {
+  if (_tramaTimer == null && _relojTimer == null) {
+    // Solo asignamos el tiempo completo si es el inicio de un nuevo período
+    if (_gameState.minutos == 0 && _gameState.segundos == 0) {
       _gameState.minutos = _duracionPeriodo;
       _gameState.segundos = 0;
-
-      _tramaTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
-        _enviarTrama();
-      });
-
-      _relojTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        _actualizarTiempo();
-      });
-
-      debugPrint("✅ Tiempo iniciado con $_duracionPeriodo minutos por período.");
+      debugPrint("🔄 Reiniciando el tiempo a $_duracionPeriodo minutos.");
+    } else {
+      debugPrint("▶️ Reanudando el tiempo desde ${_gameState.minutos}:${_gameState.segundos}.");
     }
+
+    _tramaTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
+      _enviarTrama();
+    });
+
+    _relojTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _actualizarTiempo();
+    });
+
+    debugPrint("✅ Tiempo iniciado.");
   }
+}
+
 
   void pausarTiempo() {
     _tramaTimer?.cancel();
@@ -110,27 +117,34 @@ class TimeController extends ChangeNotifier {
   }
 
   void _actualizarTiempo() {
-    if (_gameState.minutos == 0 && _gameState.segundos == 0) {
-      if (_periodoActual < _totalPeriodos) {
-        _periodoActual++;
-        _gameState.minutos = _duracionPeriodo;
-        _gameState.segundos = 0;
-
-        debugPrint("🔄 Nuevo período $_periodoActual de $_totalPeriodos. Reiniciando a $_duracionPeriodo minutos.");
-      } else {
-        pausarTiempo();
-        debugPrint("⏹️ Partido finalizado.");
-      }
-    } else {
-      if (_gameState.segundos == 0) {
-        _gameState.minutos--;
-        _gameState.segundos = 59;
-      } else {
-        _gameState.segundos--;
-      }
-    }
-    notifyListeners();
+  //  Si hay un tiempo muerto activo, no se actualiza el tiempo general
+  if (_gameState.tiempoMuertoActivoLocal || _gameState.tiempoMuertoActivoVisitante) {
+    debugPrint("⏸️ Tiempo pausado: Tiempo muerto en curso.");
+    return;
   }
+
+  if (_gameState.minutos == 0 && _gameState.segundos == 0) {
+    if (_periodoActual < _totalPeriodos) {
+      _periodoActual++;
+      _gameState.minutos = _duracionPeriodo;
+      _gameState.segundos = 0;
+
+      debugPrint("🔄 Nuevo período $_periodoActual de $_totalPeriodos. Reiniciando a $_duracionPeriodo minutos.");
+    } else {
+      pausarTiempo();
+      debugPrint("⏹️ Partido finalizado.");
+    }
+  } else {
+    if (_gameState.segundos == 0) {
+      _gameState.minutos--;
+      _gameState.segundos = 59;
+    } else {
+      _gameState.segundos--;
+    }
+  }
+  notifyListeners();
+}
+
 
   void _enviarTrama() {
     _bitOscilacion = !_bitOscilacion;

@@ -59,7 +59,7 @@ class GameState {
   Uint8List generarTramaFaltas({required int bitOscilacion}) {
     return Uint8List.fromList([
       0xAA, 0xAB, 0xAC, // Encabezado
-      0x02, // Indica que es una trama de faltas
+      0x00, // Tiempo menor  a un minuto 
       convertirDecimalAHex(minutos),
       convertirDecimalAHex(segundos),
       convertirDecimalAHex(marcadorLocal % 100),
@@ -79,31 +79,33 @@ class GameState {
   }
 
   /// **Trama para INICIO de tiempo muerto**
-  Uint8List generarTramaTiempoMuertoInicio() {
+  Uint8List generarTramaTiempoMuertoInicio({required int bitOscilacion}) {
     return Uint8List.fromList([
       0xAA, 0xAB, 0xAC, // Encabezado
       0x06, // Indicador de inicio de sonido
-      0x59, 0x98, // Datos estandarizados de tiempo
+      convertirDecimalAHex(minutos),
+      convertirDecimalAHex(segundos),// Datos estandarizados de tiempo
       convertirDecimalAHex(marcadorLocal % 100),
       convertirDecimalAHex(marcadorVisitante % 100),
       codificarCentenas(marcadorLocal, marcadorVisitante),
       0x34, // Tiempo local ajustado
-      0x24, // Indicador específico
+      ((bitOscilacion & 0x0F) << 4) | (periodo & 0x0F), // Bit oscilante y periodo combinados
       0xAD // Fin de la trama
     ]);
   }
 
   /// **Trama para FIN de tiempo muerto**
-  Uint8List generarTramaTiempoMuertoFin() {
+  Uint8List generarTramaTiempoMuertoFin({required int bitOscilacion}) {
     return Uint8List.fromList([
       0xAA, 0xAB, 0xAC, // Encabezado
       0x02, // Indicador de fin de sonido
-      0x59, 0x98, // Datos estandarizados de tiempo
+      convertirDecimalAHex(minutos),
+      convertirDecimalAHex(segundos), // Datos estandarizados de tiempo
       convertirDecimalAHex(marcadorLocal % 100),
       convertirDecimalAHex(marcadorVisitante % 100),
       codificarCentenas(marcadorLocal, marcadorVisitante),
       0x34, // Tiempo local ajustado
-      0x24, // Indicador específico
+      ((bitOscilacion & 0x0F) << 4) | (periodo & 0x0F), // Bit oscilante y periodo combinados
       0xAD // Fin de la trama
     ]);
   }

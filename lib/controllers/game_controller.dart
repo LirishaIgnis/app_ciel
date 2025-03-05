@@ -18,7 +18,8 @@ class GameController extends ChangeNotifier {
   /// **Actualiza y envía la trama estándar**
   void _actualizarTrama() {
     _bitOscilacion = !_bitOscilacion; // Alternar entre 6 y 2
-    Uint8List trama = _gameState.generarTramaEstadoPartido(_bitOscilacion ? 6 : 2);
+    Uint8List trama =
+        _gameState.generarTramaEstadoPartido(_bitOscilacion ? 6 : 2);
     _bluetoothService.enviarTrama(trama);
   }
 
@@ -113,31 +114,35 @@ class GameController extends ChangeNotifier {
 
   /// **Inicia el tiempo muerto para el equipo local**
   void iniciarTiempoMuertoLocal() {
-    if (_gameState.tiempoMuertoActivoLocal) return; // Si ya está activo, no hacer nada
+    if (_gameState.tiempoMuertoActivoLocal) return;
 
     _gameState.tiempoMuertoActivoLocal = true;
     _gameState.tiempoMuertoLocal = 60;
     notifyListeners();
 
-    // Enviar la trama de inicio de sonido del tiempo muerto
-    _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoInicio());
+    debugPrint("⏸️ Tiempo muerto activado para el equipo local.");
 
-    // Iniciar el conteo regresivo del tiempo muerto
-    _timerTiempoMuertoLocal = Timer.periodic(Duration(seconds: 1), (timer) {
-      if (_gameState.tiempoMuertoLocal == 59) {
-        _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoFin());
-      }
-
+    _timerTiempoMuertoLocal =
+        Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_gameState.tiempoMuertoLocal > 0) {
         _gameState.tiempoMuertoLocal--;
       } else {
-        // Al llegar a 0, finaliza el tiempo muerto y retoma la trama normal
-        _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoInicio());
-        Future.delayed(Duration(seconds: 1), () {
-          _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoFin());
-          _gameState.tiempoMuertoActivoLocal = false;
-          _timerTiempoMuertoLocal?.cancel();
-          _actualizarTrama();
+        //DETENER EL TIMER INMEDIATAMENTE
+        _timerTiempoMuertoLocal?.cancel();
+        debugPrint("🔔 Fin del tiempo muerto, emitiendo sonido...");
+        _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoInicio(
+            bitOscilacion: _bitOscilacion ? 6 : 2));
+
+        Future.delayed(const Duration(seconds: 1), () {
+          debugPrint("⏹️ Fin del sonido, enviando trama de finalización...");
+          _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoFin(
+              bitOscilacion: _bitOscilacion ? 6 : 2));
+
+          Future.delayed(const Duration(milliseconds: 500), () {
+            debugPrint("▶️ Retomando trama normal...");
+            _gameState.tiempoMuertoActivoLocal = false;
+            _actualizarTrama();
+          });
         });
       }
       notifyListeners();
@@ -152,25 +157,30 @@ class GameController extends ChangeNotifier {
     _gameState.tiempoMuertoVisitante = 60;
     notifyListeners();
 
-    // Enviar la trama de inicio de sonido del tiempo muerto
-    _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoInicio());
+    debugPrint("⏸️ Tiempo muerto activado para el equipo visitante.");
 
-    // Iniciar el conteo regresivo del tiempo muerto
-    _timerTiempoMuertoVisitante = Timer.periodic(Duration(seconds: 1), (timer) {
-      if (_gameState.tiempoMuertoVisitante == 59) {
-        _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoFin());
-      }
-
+    _timerTiempoMuertoVisitante =
+        Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_gameState.tiempoMuertoVisitante > 0) {
         _gameState.tiempoMuertoVisitante--;
       } else {
-        // Al llegar a 0, finaliza el tiempo muerto y retoma la trama normal
-        _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoInicio());
-        Future.delayed(Duration(seconds: 1), () {
-          _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoFin());
-          _gameState.tiempoMuertoActivoVisitante = false;
-          _timerTiempoMuertoVisitante?.cancel();
-          _actualizarTrama();
+        // 🚨 DETENER EL TIMER INMEDIATAMENTE PARA EVITAR EJECUCIONES EXTRA
+        _timerTiempoMuertoVisitante?.cancel();
+
+        debugPrint("🔔 Fin del tiempo muerto, emitiendo sonido...");
+        _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoInicio(
+            bitOscilacion: _bitOscilacion ? 6 : 2));
+
+        Future.delayed(const Duration(seconds: 1), () {
+          debugPrint("⏹️ Fin del sonido, enviando trama de finalización...");
+          _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoFin(
+              bitOscilacion: _bitOscilacion ? 6 : 2));
+
+          Future.delayed(const Duration(milliseconds: 500), () {
+            debugPrint("▶️ Retomando trama normal...");
+            _gameState.tiempoMuertoActivoVisitante = false;
+            _actualizarTrama();
+          });
         });
       }
       notifyListeners();
