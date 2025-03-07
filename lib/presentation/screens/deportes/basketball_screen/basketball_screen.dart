@@ -56,7 +56,7 @@ class _BasketballSettingsViewState extends State<_BasketballSettingsView> {
   bool shotClockEnabled = true;  
 
   final quarterOptions = ['4', '2', '6']; 
-  final periodDurationOptions = ['10', '15', '20']; 
+  final periodDurationOptions = ['10', '15', '20','2']; 
 
   @override
   void initState() {

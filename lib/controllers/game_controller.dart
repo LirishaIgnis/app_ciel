@@ -147,13 +147,13 @@ void reiniciarPeriodo() {
         //DETENER EL TIMER INMEDIATAMENTE
         _timerTiempoMuertoLocal?.cancel();
         debugPrint("🔔 Fin del tiempo muerto, emitiendo sonido...");
-        _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoInicio(
-            bitOscilacion: _bitOscilacion ? 6 : 2));
+        _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoInicio(_bitOscilacion ? 6 : 2));
+
 
         Future.delayed(const Duration(seconds: 1), () {
           debugPrint("⏹️ Fin del sonido, enviando trama de finalización...");
-          _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoFin(
-              bitOscilacion: _bitOscilacion ? 6 : 2));
+          _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoFin(_bitOscilacion ? 6 : 2));
+
 
           Future.delayed(const Duration(milliseconds: 500), () {
             debugPrint("▶️ Retomando trama normal...");
@@ -185,13 +185,12 @@ void reiniciarPeriodo() {
         _timerTiempoMuertoVisitante?.cancel();
 
         debugPrint("🔔 Fin del tiempo muerto, emitiendo sonido...");
-        _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoInicio(
-            bitOscilacion: _bitOscilacion ? 6 : 2));
+        _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoInicio(_bitOscilacion ? 6 : 2));
 
         Future.delayed(const Duration(seconds: 1), () {
           debugPrint("⏹️ Fin del sonido, enviando trama de finalización...");
-          _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoFin(
-              bitOscilacion: _bitOscilacion ? 6 : 2));
+          _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoFin(_bitOscilacion ? 6 : 2));
+
 
           Future.delayed(const Duration(milliseconds: 500), () {
             debugPrint("▶️ Retomando trama normal...");

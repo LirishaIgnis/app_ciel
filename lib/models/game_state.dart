@@ -25,7 +25,59 @@ class GameState {
     this.faltasVisitante = 0,
   });
 
-    /// **Genera la trama de nombres de equipo**
+     /// **🔹 Trama optimizada para estados generales**
+  Uint8List generarTramaEstado({required int tipoTrama, required int bitOscilacion}) {
+    int valorMinutos = minutos;
+    int valorSegundos = segundos;
+
+    // 🕒 Si el tiempo es menor a 1 minuto, intercambiar valores
+    if (minutos == 0) {
+      valorMinutos = convertirDecimalAHex(segundos); // **Segundos en la posición de minutos**
+      valorSegundos = 0x59; // **Milisegundos en la posición de segundos**
+    } else {
+      valorMinutos = convertirDecimalAHex(minutos);
+      valorSegundos = convertirDecimalAHex(segundos);
+    }
+
+    return Uint8List.fromList([
+      0xAA, 0xAB, 0xAC, //  Encabezado común
+      tipoTrama, //  Tipo de trama (0x00 estándar, 0x01 menos de 1 min, 0x06 inicio sonido, 0x02 fin sonido)
+      valorMinutos, //  Minutos o Segundos (según el caso)
+      valorSegundos, //  Segundos o Milisegundos (según el caso)
+      convertirDecimalAHex(marcadorLocal % 100), //  Decenas y unidades del marcador local
+      convertirDecimalAHex(marcadorVisitante % 100), //  Decenas y unidades del marcador visitante
+      codificarCentenas(marcadorLocal, marcadorVisitante), //  Centenas combinadas
+      0x34, //  Dato fijo
+      ((bitOscilacion & 0x0F) << 4) | (periodo & 0x0F), //  Bit oscilante y periodo combinados
+      0xAD //  Fin de la trama
+    ]);
+  }
+
+  /// **🔹 Trama estándar (tiempo mayor a un minuto)**
+  Uint8List generarTramaEstadoPartido(int bitOscilacion) {
+    return generarTramaEstado(tipoTrama: 0x00, bitOscilacion: bitOscilacion);
+  }
+
+  /// **🔹 Trama para tiempo menor a un minuto**
+  Uint8List generarTramaTiempoMenorUnMinuto(int bitOscilacion) {
+    return generarTramaEstado(tipoTrama: 0x01, bitOscilacion: bitOscilacion);
+  }
+
+  /// **🔹 Trama para inicio de tiempo muerto**
+  Uint8List generarTramaTiempoMuertoInicio(int bitOscilacion) {
+    return generarTramaEstado(tipoTrama: 0x06, bitOscilacion: bitOscilacion);
+  }
+
+  /// **🔹 Trama para fin de tiempo muerto**
+  Uint8List generarTramaTiempoMuertoFin(int bitOscilacion) {
+    return generarTramaEstado(tipoTrama: 0x02, bitOscilacion: bitOscilacion);
+  }
+
+  // -------------------------------------------------------------------
+  // **✅ Sección Mantenida: Funciones de Nombres y Faltas**
+  // -------------------------------------------------------------------
+
+  /// **🔹 Genera la trama de nombres de equipo**
   Uint8List generarTramaNombreEquipo({required bool esLocal, required String nombreEquipo}) {
     String etiqueta = esLocal ? "ZF0" : "ZF1"; // Local: ZF1, Visitante: ZF0
 
@@ -45,38 +97,7 @@ class GameState {
     return Uint8List.fromList(trama);
   }
 
-
-  /// **Función para convertir un valor decimal al formato hexadecimal especificado**
-  int convertirDecimalAHex(int valor) {
-    int parteEntera = valor ~/ 10;
-    int parteUnidades = valor % 10;
-    return (parteEntera << 4) | parteUnidades; // Combina decenas y unidades
-  }
-
-  /// **Codifica las centenas del marcador local y visitante en un solo byte**
-  int codificarCentenas(int marcadorLocal, int marcadorVisitante) {
-    int centenaLocal = marcadorLocal ~/ 100;
-    int centenaVisitante = marcadorVisitante ~/ 100;
-    return (centenaLocal << 4) | centenaVisitante;
-  }
-
-  /// **Genera la trama completa con la codificación correcta (trama estándar)**
-  Uint8List generarTramaEstadoPartido(int bitOscilacion) {
-    return Uint8List.fromList([
-      0xAA, 0xAB, 0xAC, // Encabezado
-      0x00, // Indica si el tiempo es menor a un minuto (ajustable si es necesario)
-      convertirDecimalAHex(minutos), // Minutos codificados
-      convertirDecimalAHex(segundos), // Segundos codificados
-      convertirDecimalAHex(marcadorLocal % 100), // Decenas y unidades del marcador local
-      convertirDecimalAHex(marcadorVisitante % 100), // Decenas y unidades del marcador visitante
-      codificarCentenas(marcadorLocal, marcadorVisitante), // Centenas combinadas
-      0x34, // Tiempo local ajustado a la especificación
-      ((bitOscilacion & 0x0F) << 4) | (periodo & 0x0F), // Bit oscilante y periodo combinados
-      0xAD // Fin de la trama
-    ]);
-  }
-
-  /// **Genera la trama de faltas (21 bytes)**
+  /// **🔹 Genera la trama de faltas (21 bytes)**
   Uint8List generarTramaFaltas({required int bitOscilacion}) {
     return Uint8List.fromList([
       0xAA, 0xAB, 0xAC, // Encabezado
@@ -99,36 +120,22 @@ class GameState {
     ]);
   }
 
-  /// **Trama para INICIO de tiempo muerto**
-  Uint8List generarTramaTiempoMuertoInicio({required int bitOscilacion}) {
-    return Uint8List.fromList([
-      0xAA, 0xAB, 0xAC, // Encabezado
-      0x06, // Indicador de inicio de sonido
-      convertirDecimalAHex(minutos),
-      convertirDecimalAHex(segundos),// Datos estandarizados de tiempo
-      convertirDecimalAHex(marcadorLocal % 100),
-      convertirDecimalAHex(marcadorVisitante % 100),
-      codificarCentenas(marcadorLocal, marcadorVisitante),
-      0x34, // Tiempo local ajustado
-      ((bitOscilacion & 0x0F) << 4) | (periodo & 0x0F), // Bit oscilante y periodo combinados
-      0xAD // Fin de la trama
-    ]);
+  // -------------------------------------------------------------------
+  // **✅ Sección de Utilidades para Conversión de Datos**
+  // -------------------------------------------------------------------
+
+  /// **🔹 Convierte un valor decimal a su representación hexadecimal en BCD**
+  int convertirDecimalAHex(int valor) {
+    int parteEntera = valor ~/ 10;
+    int parteUnidades = valor % 10;
+    return (parteEntera << 4) | parteUnidades; // 🔹 Combina decenas y unidades
   }
 
-  /// **Trama para FIN de tiempo muerto**
-  Uint8List generarTramaTiempoMuertoFin({required int bitOscilacion}) {
-    return Uint8List.fromList([
-      0xAA, 0xAB, 0xAC, // Encabezado
-      0x02, // Indicador de fin de sonido
-      convertirDecimalAHex(minutos),
-      convertirDecimalAHex(segundos), // Datos estandarizados de tiempo
-      convertirDecimalAHex(marcadorLocal % 100),
-      convertirDecimalAHex(marcadorVisitante % 100),
-      codificarCentenas(marcadorLocal, marcadorVisitante),
-      0x34, // Tiempo local ajustado
-      ((bitOscilacion & 0x0F) << 4) | (periodo & 0x0F), // Bit oscilante y periodo combinados
-      0xAD // Fin de la trama
-    ]);
+  /// **🔹 Codifica las centenas del marcador local y visitante en un solo byte**
+  int codificarCentenas(int marcadorLocal, int marcadorVisitante) {
+    int centenaLocal = marcadorLocal ~/ 100;
+    int centenaVisitante = marcadorVisitante ~/ 100;
+    return (centenaLocal << 4) | centenaVisitante;
   }
 }
 

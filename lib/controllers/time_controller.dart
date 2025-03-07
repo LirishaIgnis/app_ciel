@@ -14,13 +14,14 @@ class TimeController extends ChangeNotifier {
 
   Timer? _tramaTimer;
   Timer? _relojTimer;
+  Timer? _alertaSonidoTimer; // ✅ Timer para manejar la alerta sonora
   bool _bitOscilacion = false;
 
   int _duracionPeriodo = 10;
   int _totalPeriodos = 4;
   int _periodoActual = 1;
-
-  bool _configCargada = false; 
+  bool _configCargada = false;
+  bool _esperandoInicio = false;
 
   TimeController(this._gameState, this._bluetoothService);
 
@@ -29,6 +30,7 @@ class TimeController extends ChangeNotifier {
   int get duracionPeriodo => _duracionPeriodo;
   int get periodoActual => _periodoActual;
   int get totalPeriodos => _totalPeriodos;
+  bool get esperandoInicio => _esperandoInicio;
 
   /// **Carga la configuración del deporte actual antes de iniciar el tiempo**
   Future<void> cargarConfiguracion(String deporte) async {
@@ -57,6 +59,7 @@ class TimeController extends ChangeNotifier {
     _gameState.segundos = 0;
     _periodoActual = 1;
     _configCargada = true;
+    _esperandoInicio = false;
 
     debugPrint("✅ Configuración cargada: $_duracionPeriodo minutos, $_totalPeriodos períodos.");
 
@@ -71,13 +74,11 @@ class TimeController extends ChangeNotifier {
     _bluetoothService.enviarTrama(_gameState.generarTramaNombreEquipo(esLocal: true, nombreEquipo: nombreLocal));
     Future.delayed(const Duration(milliseconds: 500), () {
       _bluetoothService.enviarTrama(_gameState.generarTramaNombreEquipo(esLocal: false, nombreEquipo: nombreVisitante));
-    });  
+    });
 
-    debugPrint("✅ Configuración cargada, nombres enviados y partido iniciado.");
-
+    debugPrint("✅ Configuración cargada, nombres enviados y partido listo para iniciar.");
     notifyListeners();
-}
-
+  }
 
   void iniciarTiempo() {
     debugPrint("📢 Intentando iniciar tiempo...");
@@ -87,14 +88,13 @@ class TimeController extends ChangeNotifier {
       return;
     }
 
+    if (_esperandoInicio) {
+      _esperandoInicio = false;
+      debugPrint("▶️ Iniciando nuevo período $_periodoActual.");
+    }
+
     if (_tramaTimer == null && _relojTimer == null) {
-      if (_gameState.minutos == 0 && _gameState.segundos == 0) {
-        _gameState.minutos = _duracionPeriodo;
-        _gameState.segundos = 0;
-        debugPrint("🔄 Reiniciando el tiempo a $_duracionPeriodo minutos.");
-      } else {
-        debugPrint("▶️ Reanudando el tiempo desde ${_gameState.minutos}:${_gameState.segundos}.");
-      }
+      debugPrint("▶️ Reanudando el tiempo desde ${_gameState.minutos}:${_gameState.segundos}.");
 
       _tramaTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
         _enviarTrama();
@@ -124,6 +124,7 @@ class TimeController extends ChangeNotifier {
     _gameState.minutos = _duracionPeriodo;
     _gameState.segundos = 0;
     _periodoActual = 1;
+    _esperandoInicio = false;
 
     gameController.reiniciarMarcadoresYTiempo();
     debugPrint("⏳ Tiempo reiniciado a $_duracionPeriodo minutos.");
@@ -138,32 +139,50 @@ class TimeController extends ChangeNotifier {
     }
 
     if (_gameState.minutos == 0 && _gameState.segundos == 0) {
-      if (_periodoActual < _totalPeriodos) {
-        _periodoActual++;
-        _gameState.minutos = _duracionPeriodo;
-        _gameState.segundos = 0;
-        debugPrint("🔄 Nuevo período $_periodoActual de $_totalPeriodos. Reiniciando a $_duracionPeriodo minutos.");
-      } else {
-        debugPrint("⚠️ No se puede avanzar. Ya se alcanzó el período máximo: $_totalPeriodos.");
-        pausarTiempo(); // ✅ Asegurar que el tiempo se detiene al alcanzar el límite
-      }
+      _activarAlertaFinTiempo();
+      return;
+    }
+
+    if (_gameState.minutos == 0 && _gameState.segundos == 59) {
+      debugPrint("⏳ Tiempo ha llegado a menos de un minuto, enviando trama correspondiente.");
+      _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMenorUnMinuto(_bitOscilacion ? 6 : 2));
+    }
+
+    if (_gameState.segundos == 0) {
+      _gameState.minutos--;
+      _gameState.segundos = 59;
     } else {
-      if (_gameState.segundos == 0) {
-        _gameState.minutos--;
-        _gameState.segundos = 59;
-      } else {
-        _gameState.segundos--;
-      }
+      _gameState.segundos--;
     }
 
     notifyListeners();
-}
+  }
 
+  void _activarAlertaFinTiempo() {
+    debugPrint("🔔 Enviando alerta sonora de fin de tiempo...");
+
+    _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoInicio(_bitOscilacion ? 6 : 2));
+
+    _alertaSonidoTimer = Timer(const Duration(seconds: 3), () {
+      debugPrint("⏹️ Apagando alerta sonora...");
+      _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoFin(_bitOscilacion ? 6 : 2));
+    });
+
+    pausarTiempo();
+  }
 
   void _enviarTrama() {
     _bitOscilacion = !_bitOscilacion;
-    Uint8List trama = _gameState.generarTramaEstadoPartido(_bitOscilacion ? 6 : 2);
+    Uint8List trama;
+
+    if (_gameState.minutos == 0) {
+      trama = _gameState.generarTramaTiempoMenorUnMinuto(_bitOscilacion ? 6 : 2);
+      debugPrint("📡 Enviando TRAMA de MENOS de 1 minuto.");
+    } else {
+      trama = _gameState.generarTramaEstadoPartido(_bitOscilacion ? 6 : 2);
+      debugPrint("📡 Enviando TRAMA ESTÁNDAR.");
+    }
+
     _bluetoothService.enviarTrama(trama);
   }
 }
-
