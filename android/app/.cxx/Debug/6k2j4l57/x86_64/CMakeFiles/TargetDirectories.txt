@@ -1,0 +1,2 @@
+C:/Users/LENOVO/Documents/Ciel/Aplicacion Ciel/app_ciel/android/app/.cxx/Debug/6k2j4l57/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/LENOVO/Documents/Ciel/Aplicacion Ciel/app_ciel/android/app/.cxx/Debug/6k2j4l57/x86_64/CMakeFiles/rebuild_cache.dir
