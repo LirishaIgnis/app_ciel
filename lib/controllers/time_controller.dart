@@ -14,7 +14,6 @@ class TimeController extends ChangeNotifier {
 
   Timer? _tramaTimer;
   Timer? _relojTimer;
-  Timer? _alertaSonidoTimer; // ✅ Timer para manejar la alerta sonora
   bool _bitOscilacion = false;
 
   int _duracionPeriodo = 10;
@@ -22,6 +21,10 @@ class TimeController extends ChangeNotifier {
   int _periodoActual = 1;
   bool _configCargada = false;
   bool _esperandoInicio = false;
+  bool _enUltimoMinuto = false;
+  bool _tiempoFinalizado = false;
+
+  Duration _duracionRestante = Duration();
 
   TimeController(this._gameState, this._bluetoothService);
 
@@ -31,8 +34,8 @@ class TimeController extends ChangeNotifier {
   int get periodoActual => _periodoActual;
   int get totalPeriodos => _totalPeriodos;
   bool get esperandoInicio => _esperandoInicio;
+  bool get tiempoFinalizado => _tiempoFinalizado;
 
-  /// **Carga la configuración del deporte actual antes de iniciar el tiempo**
   Future<void> cargarConfiguracion(String deporte) async {
     debugPrint("📢 Intentando cargar configuración para: $deporte...");
 
@@ -48,7 +51,7 @@ class TimeController extends ChangeNotifier {
         _totalPeriodos = 2;
         break;
       case "volleyball":
-        _duracionPeriodo = config["points_per_set"] ?? 25; 
+        _duracionPeriodo = config["points_per_set"] ?? 25;
         _totalPeriodos = config["sets"] ?? 5;
         break;
       default:
@@ -57,13 +60,12 @@ class TimeController extends ChangeNotifier {
 
     _gameState.minutos = _duracionPeriodo;
     _gameState.segundos = 0;
+    _duracionRestante = Duration(minutes: _duracionPeriodo);
     _periodoActual = 1;
     _configCargada = true;
     _esperandoInicio = false;
+    _tiempoFinalizado = false;
 
-    debugPrint("✅ Configuración cargada: $_duracionPeriodo minutos, $_totalPeriodos períodos.");
-
-    // 🔹 Obtener nombres desde Hive y enviarlos
     final teamLocal = HiveService.getTeam1();
     final teamVisitante = HiveService.getTeam2();
 
@@ -93,15 +95,18 @@ class TimeController extends ChangeNotifier {
       debugPrint("▶️ Iniciando nuevo período $_periodoActual.");
     }
 
-    if (_tramaTimer == null && _relojTimer == null) {
+    if (_tramaTimer == null && _relojTimer == null && !_tiempoFinalizado) {
       debugPrint("▶️ Reanudando el tiempo desde ${_gameState.minutos}:${_gameState.segundos}.");
+
+      final segundosTotales = _gameState.minutos * 60 + _gameState.segundos;
+      _duracionRestante = Duration(seconds: segundosTotales);
 
       _tramaTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
         _enviarTrama();
       });
 
-      _relojTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        _actualizarTiempo();
+      _relojTimer = Timer.periodic(const Duration(milliseconds: 10), (timer) {
+        _actualizarTiempoPreciso();
       });
 
       debugPrint("✅ Tiempo iniciado.");
@@ -123,8 +128,11 @@ class TimeController extends ChangeNotifier {
 
     _gameState.minutos = _duracionPeriodo;
     _gameState.segundos = 0;
+    _duracionRestante = Duration(minutes: _duracionPeriodo);
     _periodoActual = 1;
     _esperandoInicio = false;
+    _tiempoFinalizado = false;
+    _enUltimoMinuto = false;
 
     gameController.reiniciarMarcadoresYTiempo();
     debugPrint("⏳ Tiempo reiniciado a $_duracionPeriodo minutos.");
@@ -132,42 +140,52 @@ class TimeController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _actualizarTiempo() {
+  void siguientePeriodo() {
+    if (_periodoActual >= _totalPeriodos) return;
+
+    _periodoActual++;
+    _gameState.periodo = _periodoActual;
+    _gameState.minutos = _duracionPeriodo;
+    _gameState.segundos = 0;
+    _duracionRestante = Duration(minutes: _duracionPeriodo);
+    _esperandoInicio = false;
+    _enUltimoMinuto = false;
+    _tiempoFinalizado = false;
+
+    debugPrint("🔁 Se cargó el período $_periodoActual con $_duracionPeriodo minutos.");
+    notifyListeners();
+  }
+
+  void _actualizarTiempoPreciso() {
     if (_gameState.tiempoMuertoActivoLocal || _gameState.tiempoMuertoActivoVisitante) {
       debugPrint("⏸️ Tiempo pausado: Tiempo muerto en curso.");
       return;
     }
 
-    if (_gameState.minutos == 0 && _gameState.segundos == 0) {
+    if (_duracionRestante <= Duration.zero) {
+      _duracionRestante = Duration.zero;
+      _tiempoFinalizado = true;
       _activarAlertaFinTiempo();
+      notifyListeners();
       return;
     }
 
-    if (_gameState.minutos == 0 && _gameState.segundos == 59) {
-      debugPrint("⏳ Tiempo ha llegado a menos de un minuto, enviando trama correspondiente.");
-      _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMenorUnMinuto(_bitOscilacion ? 6 : 2));
+    _duracionRestante -= Duration(milliseconds: 10);
+
+    final totalSeconds = _duracionRestante.inSeconds;
+    if (totalSeconds < 60) {
+      _enUltimoMinuto = true;
     }
 
-    if (_gameState.segundos == 0) {
-      _gameState.minutos--;
-      _gameState.segundos = 59;
-    } else {
-      _gameState.segundos--;
-    }
+    _gameState.minutos = _duracionRestante.inMinutes;
+    _gameState.segundos = _duracionRestante.inSeconds % 60;
 
     notifyListeners();
   }
 
   void _activarAlertaFinTiempo() {
     debugPrint("🔔 Enviando alerta sonora de fin de tiempo...");
-
     _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoInicio(_bitOscilacion ? 6 : 2));
-
-    _alertaSonidoTimer = Timer(const Duration(seconds: 3), () {
-      debugPrint("⏹️ Apagando alerta sonora...");
-      _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoFin(_bitOscilacion ? 6 : 2));
-    });
-
     pausarTiempo();
   }
 
@@ -175,7 +193,7 @@ class TimeController extends ChangeNotifier {
     _bitOscilacion = !_bitOscilacion;
     Uint8List trama;
 
-    if (_gameState.minutos == 0) {
+    if (_enUltimoMinuto) {
       trama = _gameState.generarTramaTiempoMenorUnMinuto(_bitOscilacion ? 6 : 2);
       debugPrint("📡 Enviando TRAMA de MENOS de 1 minuto.");
     } else {

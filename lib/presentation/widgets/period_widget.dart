@@ -23,8 +23,7 @@ class PeriodWidget extends StatelessWidget {
         ElevatedButton(
           onPressed: () {
             if (gameController.gameState.periodo < timeController.totalPeriodos) {
-              gameController.cambiarPeriodo(timeController);
-              timeController.reiniciarTiempo(gameController);
+              timeController.siguientePeriodo();
             } else {
               _mostrarAlerta(context, gameController);
             }
@@ -46,7 +45,7 @@ class PeriodWidget extends StatelessWidget {
   void _mostrarAlerta(BuildContext context, GameController gameController) {
     showDialog(
       context: context,
-      barrierDismissible: false, // 🔹 Evita que se cierre al tocar fuera de la alerta
+      barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         title: Text("⚠️ Fin del Partido"),
         content: Text("El partido ha terminado. No se pueden agregar más períodos."),
@@ -54,7 +53,7 @@ class PeriodWidget extends StatelessWidget {
           TextButton(
             onPressed: () {
               context.push('/deportes');
-              gameController.reiniciarPeriodo(); // 🔹 Reiniciar período al salir del tablero
+              gameController.reiniciarPeriodo();
             },
             child: Text("Aceptar"),
           ),
@@ -63,5 +62,3 @@ class PeriodWidget extends StatelessWidget {
     );
   }
 }
-
-
