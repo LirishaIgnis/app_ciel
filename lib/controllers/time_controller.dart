@@ -35,6 +35,7 @@ class TimeController extends ChangeNotifier {
   int get totalPeriodos => _totalPeriodos;
   bool get esperandoInicio => _esperandoInicio;
   bool get tiempoFinalizado => _tiempoFinalizado;
+  Duration get duracionRestante => _duracionRestante;
 
   Future<void> cargarConfiguracion(String deporte) async {
     debugPrint("📢 Intentando cargar configuración para: $deporte...");
