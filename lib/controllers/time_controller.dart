@@ -56,7 +56,8 @@ class TimeController extends ChangeNotifier {
         _totalPeriodos = config["sets"] ?? 5;
         break;
       default:
-        debugPrint("⚠️ Deporte desconocido: $deporte. Se usará configuración predeterminada.");
+        debugPrint(
+            "⚠️ Deporte desconocido: $deporte. Se usará configuración predeterminada.");
     }
 
     _gameState.minutos = _duracionPeriodo;
@@ -74,12 +75,15 @@ class TimeController extends ChangeNotifier {
     final String nombreVisitante = teamVisitante?.name ?? "VISITANTE";
 
     debugPrint("📡 Enviando nombres de equipos...");
-    _bluetoothService.enviarTrama(_gameState.generarTramaNombreEquipo(esLocal: true, nombreEquipo: nombreLocal));
+    _bluetoothService.enviarTrama(_gameState.generarTramaNombreEquipo(
+        esLocal: true, nombreEquipo: nombreLocal));
     Future.delayed(const Duration(milliseconds: 500), () {
-      _bluetoothService.enviarTrama(_gameState.generarTramaNombreEquipo(esLocal: false, nombreEquipo: nombreVisitante));
+      _bluetoothService.enviarTrama(_gameState.generarTramaNombreEquipo(
+          esLocal: false, nombreEquipo: nombreVisitante));
     });
 
-    debugPrint("✅ Configuración cargada, nombres enviados y partido listo para iniciar.");
+    debugPrint(
+        "✅ Configuración cargada, nombres enviados y partido listo para iniciar.");
     notifyListeners();
   }
 
@@ -87,7 +91,8 @@ class TimeController extends ChangeNotifier {
     debugPrint("📢 Intentando iniciar tiempo...");
 
     if (!_configCargada) {
-      debugPrint("❌ ERROR: No se ha cargado la configuración antes de iniciar el tiempo.");
+      debugPrint(
+          "❌ ERROR: No se ha cargado la configuración antes de iniciar el tiempo.");
       return;
     }
 
@@ -97,7 +102,8 @@ class TimeController extends ChangeNotifier {
     }
 
     if (_tramaTimer == null && _relojTimer == null && !_tiempoFinalizado) {
-      debugPrint("▶️ Reanudando el tiempo desde ${_gameState.minutos}:${_gameState.segundos}.");
+      debugPrint(
+          "▶️ Reanudando el tiempo desde ${_gameState.minutos}:${_gameState.segundos}.");
 
       final segundosTotales = _gameState.minutos * 60 + _gameState.segundos;
       _duracionRestante = Duration(seconds: segundosTotales);
@@ -115,6 +121,15 @@ class TimeController extends ChangeNotifier {
   }
 
   void pausarTiempo() {
+    if (_enUltimoMinuto) {
+      final trama = _gameState.generarTramaTiempoMenorUnMinuto(
+        _bitOscilacion ? 6 : 2,
+        enPausa: true,
+      );
+      _bluetoothService.enviarTrama(trama);
+      debugPrint("📡 Trama de pausa enviada manualmente");
+    }
+
     _tramaTimer?.cancel();
     _tramaTimer = null;
     _relojTimer?.cancel();
@@ -153,7 +168,8 @@ class TimeController extends ChangeNotifier {
     _enUltimoMinuto = false;
     _tiempoFinalizado = false;
 
-    debugPrint("🔁 Se cargó el período $_periodoActual con $_duracionPeriodo minutos.");
+    debugPrint(
+        "🔁 Se cargó el período $_periodoActual con $_duracionPeriodo minutos.");
     notifyListeners();
   }
 
@@ -180,13 +196,16 @@ class TimeController extends ChangeNotifier {
 
     _gameState.minutos = _duracionRestante.inMinutes;
     _gameState.segundos = _duracionRestante.inSeconds % 60;
+    _gameState.milisegundos = _duracionRestante.inMilliseconds % 1000;
 
     notifyListeners();
   }
 
+
   void _activarAlertaFinTiempo() {
     debugPrint("🔔 Enviando alerta sonora de fin de tiempo...");
-    _bluetoothService.enviarTrama(_gameState.generarTramaTiempoMuertoInicio(_bitOscilacion ? 6 : 2));
+    _bluetoothService.enviarTrama(
+        _gameState.generarTramaTiempoMuertoInicio(_bitOscilacion ? 6 : 2));
     pausarTiempo();
   }
 
@@ -195,8 +214,19 @@ class TimeController extends ChangeNotifier {
     Uint8List trama;
 
     if (_enUltimoMinuto) {
-      trama = _gameState.generarTramaTiempoMenorUnMinuto(_bitOscilacion ? 6 : 2);
-      debugPrint("📡 Enviando TRAMA de MENOS de 1 minuto.");
+      final estaPausado = _relojTimer == null;
+      trama = _gameState.generarTramaTiempoMenorUnMinuto(
+        _bitOscilacion ? 6 : 2,
+        enPausa: estaPausado,
+      );
+      debugPrint(
+          "📡 Enviando TRAMA de MENOS de 1 minuto. Pausado: $estaPausado");
+
+      if (estaPausado) {
+        _bluetoothService.enviarTrama(trama);
+        debugPrint("📡 Enviando TRAMA FINAL con PAUSA ACTIVA.");
+        return;
+      }
     } else {
       trama = _gameState.generarTramaEstadoPartido(_bitOscilacion ? 6 : 2);
       debugPrint("📡 Enviando TRAMA ESTÁNDAR.");
