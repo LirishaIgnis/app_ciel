@@ -87,38 +87,38 @@ class TimeController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void iniciarTiempo() {
+ void iniciarTiempo() {
     debugPrint("📢 Intentando iniciar tiempo...");
 
     if (!_configCargada) {
-      debugPrint(
-          "❌ ERROR: No se ha cargado la configuración antes de iniciar el tiempo.");
+      debugPrint("❌ ERROR: No se ha cargado la configuración antes de iniciar el tiempo.");
       return;
     }
 
     if (_esperandoInicio) {
       _esperandoInicio = false;
-      debugPrint("▶️ Iniciando nuevo período $_periodoActual.");
+      debugPrint("▶️ Iniciando nuevo período \$periodoActual.");
     }
 
     if (_tramaTimer == null && _relojTimer == null && !_tiempoFinalizado) {
-      debugPrint(
-          "▶️ Reanudando el tiempo desde ${_gameState.minutos}:${_gameState.segundos}.");
+      debugPrint("▶️ Reanudando el tiempo desde \${_gameState.minutos}:\${_gameState.segundos}.");
 
       final segundosTotales = _gameState.minutos * 60 + _gameState.segundos;
       _duracionRestante = Duration(seconds: segundosTotales);
+      _ultimaActualizacion = DateTime.now();
 
       _tramaTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
         _enviarTrama();
       });
 
-      _relojTimer = Timer.periodic(const Duration(milliseconds: 10), (timer) {
+      _relojTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
         _actualizarTiempoPreciso();
       });
 
       debugPrint("✅ Tiempo iniciado.");
     }
   }
+
 
   void pausarTiempo() {
     if (_enUltimoMinuto) {
@@ -173,11 +173,19 @@ class TimeController extends ChangeNotifier {
     notifyListeners();
   }
 
+  DateTime _ultimaActualizacion = DateTime.now();
+
   void _actualizarTiempoPreciso() {
     if (_gameState.tiempoMuertoActivoLocal || _gameState.tiempoMuertoActivoVisitante) {
       debugPrint("⏸️ Tiempo pausado: Tiempo muerto en curso.");
       return;
     }
+
+    final ahora = DateTime.now();
+    final transcurrido = ahora.difference(_ultimaActualizacion);
+    _ultimaActualizacion = ahora;
+
+    _duracionRestante -= transcurrido;
 
     if (_duracionRestante <= Duration.zero) {
       _duracionRestante = Duration.zero;
@@ -186,8 +194,6 @@ class TimeController extends ChangeNotifier {
       notifyListeners();
       return;
     }
-
-    _duracionRestante -= Duration(milliseconds: 10);
 
     final totalSeconds = _duracionRestante.inSeconds;
     if (totalSeconds < 60) {
@@ -200,6 +206,7 @@ class TimeController extends ChangeNotifier {
 
     notifyListeners();
   }
+
 
 
   void _activarAlertaFinTiempo() {
