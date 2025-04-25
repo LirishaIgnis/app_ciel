@@ -10,6 +10,8 @@ class GameController extends ChangeNotifier {
   bool _bitOscilacion = false;
   Timer? _timerTiempoMuertoLocal;
   Timer? _timerTiempoMuertoVisitante;
+  bool sonidoManualActivo = false;
+
 
   GameController(this._gameState, this._bluetoothService);
 
@@ -84,6 +86,17 @@ class GameController extends ChangeNotifier {
       _enviarTramaFaltas();
     }
   }
+
+  void alternarBocinaManual() {
+  final trama = sonidoManualActivo
+    ? _gameState.generarTramaTiempoMuertoFin(_bitOscilacion ? 6 : 2)
+    : _gameState.generarTramaTiempoMuertoInicio(_bitOscilacion ? 6 : 2);
+
+  _bluetoothService.enviarTrama(trama);
+  sonidoManualActivo = !sonidoManualActivo;
+  notifyListeners();
+}
+
 
   void reiniciarPeriodo() {
     _gameState.periodo = 1;

@@ -66,12 +66,12 @@ class GameState {
     return generarTramaEstado(tipoTrama: tipoTrama, bitOscilacion: bitOscilacion);
   }
 
-  /// **🔹 Trama para inicio de tiempo muerto**
+  /// **🔹 Trama para inicio de sonido **
   Uint8List generarTramaTiempoMuertoInicio(int bitOscilacion) {
     return generarTramaEstado(tipoTrama: 0x06, bitOscilacion: bitOscilacion);
   }
 
-  /// **🔹 Trama para fin de tiempo muerto**
+  /// **🔹 Trama para fin de sonido**
   Uint8List generarTramaTiempoMuertoFin(int bitOscilacion) {
     return generarTramaEstado(tipoTrama: 0x02, bitOscilacion: bitOscilacion);
   }

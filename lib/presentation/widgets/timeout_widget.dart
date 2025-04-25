@@ -4,49 +4,76 @@ import 'package:app_ciel/controllers/game_controller.dart';
 class TimeoutWidget extends StatelessWidget {
   final GameController gameController;
 
-  TimeoutWidget(this.gameController);
+  const TimeoutWidget(this.gameController, {super.key, required bool isLocal});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        // Time Out Local (Botón a la izquierda, tiempo a la derecha)
-        Row(
-          children: [
-            ElevatedButton(
-              onPressed: gameController.iniciarTiempoMuertoLocal,
-              child: Text("Time Out Local"),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-            ),
-            SizedBox(width: 10),
-            if (gameController.gameState.tiempoMuertoActivoLocal)
-              Text(
-                "${gameController.gameState.tiempoMuertoLocal}s",
-                style: TextStyle(fontSize: 22, color: Colors.blue, fontWeight: FontWeight.bold),
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Time Out Local
+          Row(
+            children: [
+              ElevatedButton(
+                onPressed: gameController.iniciarTiempoMuertoLocal,
+                child: const Text("Time Out Local"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green[700],
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
               ),
-          ],
-        ),
+              const SizedBox(width: 10),
+              if (gameController.gameState.tiempoMuertoActivoLocal)
+                Text(
+                  "${gameController.gameState.tiempoMuertoLocal}s",
+                  style: const TextStyle(
+                    fontSize: 22,
+                    color: Colors.greenAccent,
+                    fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(blurRadius: 6, color: Colors.green, offset: Offset(0, 0)),
+                    ],
+                  ),
+                ),
+            ],
+          ),
 
-        SizedBox(width: 40),
+          const SizedBox(width: 40),
 
-        // Time Out Visitante (Tiempo a la izquierda, botón a la derecha)
-        Row(
-          children: [
-            if (gameController.gameState.tiempoMuertoActivoVisitante)
-              Text(
-                "${gameController.gameState.tiempoMuertoVisitante}s",
-                style: TextStyle(fontSize: 22, color: Colors.red, fontWeight: FontWeight.bold),
+          // Time Out Visitante
+          Row(
+            children: [
+              if (gameController.gameState.tiempoMuertoActivoVisitante)
+                Text(
+                  "${gameController.gameState.tiempoMuertoVisitante}s",
+                  style: const TextStyle(
+                    fontSize: 22,
+                    color: Colors.redAccent,
+                    fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(blurRadius: 6, color: Colors.red, offset: Offset(0, 0)),
+                    ],
+                  ),
+                ),
+              const SizedBox(width: 10),
+              ElevatedButton(
+                onPressed: gameController.iniciarTiempoMuertoVisitante,
+                child: const Text("Time Out Visitante"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red[700],
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
               ),
-            SizedBox(width: 10),
-            ElevatedButton(
-              onPressed: gameController.iniciarTiempoMuertoVisitante,
-              child: Text("Time Out Visitante"),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
