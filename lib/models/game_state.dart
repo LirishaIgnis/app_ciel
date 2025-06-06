@@ -49,7 +49,7 @@ class GameState {
       convertirDecimalAHex(marcadorLocal % 100), //  Decenas y unidades del marcador local
       convertirDecimalAHex(marcadorVisitante % 100), //  Decenas y unidades del marcador visitante
       codificarCentenas(marcadorLocal, marcadorVisitante), //  Centenas combinadas
-      0x34, //  Dato fijo
+      0x34, //  Tiempos muertos
       ((bitOscilacion & 0x0F) << 4) | (periodo & 0x0F), //  Bit oscilante y periodo combinados
       0xAD //  Fin de la trama
     ]);
