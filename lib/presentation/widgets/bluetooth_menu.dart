@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart' as fbp;
 import 'package:app_ciel/servicios/conexion/bluetooth/bluetooth_service.dart';
+import 'dart:async';
 
 class BluetoothMenu extends StatefulWidget {
   final BluetoothService bluetoothService;
@@ -12,25 +13,32 @@ class BluetoothMenu extends StatefulWidget {
 }
 
 class _BluetoothMenuState extends State<BluetoothMenu> {
-  BluetoothDevice? _selectedDevice;
-  List<BluetoothDevice> _devices = [];
+  fbp.BluetoothDevice? _selectedDevice;
+  List<fbp.ScanResult> _devices = [];
+  StreamSubscription? _scanSubscription;
 
   @override
   void initState() {
     super.initState();
-    _fetchPairedDevices();
+    _iniciarEscaneo();
   }
 
-  /// **Busca dispositivos Bluetooth emparejados**
-  Future<void> _fetchPairedDevices() async {
-    try {
-      List<BluetoothDevice> devices = await FlutterBluetoothSerial.instance.getBondedDevices();
-      setState(() {
-        _devices = devices;
-      });
-    } catch (e) {
-      print("Error al obtener dispositivos emparejados: $e");
-    }
+  /// **Inicia escaneo usando BluetoothService**
+  void _iniciarEscaneo() {
+    widget.bluetoothService.detenerEscaneo();
+    _scanSubscription = widget.bluetoothService.escanearDispositivos().listen((results) {
+      if (mounted) {
+        setState(() {
+          _devices = results;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scanSubscription?.cancel();
+    super.dispose();
   }
 
   @override
@@ -43,23 +51,24 @@ class _BluetoothMenuState extends State<BluetoothMenu> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text("Dispositivos Bluetooth",
-                style: TextStyle(
-                    color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
             SizedBox(height: 10),
 
-            // **Dropdown con lista de dispositivos**
-            DropdownButtonFormField<BluetoothDevice>(
+            // Dropdown de dispositivos escaneados
+            DropdownButtonFormField<fbp.BluetoothDevice>(
               dropdownColor: Colors.grey[850],
               value: _selectedDevice,
-              items: _devices.isNotEmpty
-                  ? _devices.map((device) {
-                      return DropdownMenuItem(
-                        value: device,
-                        child: Text(device.name ?? "Desconocido",
-                            style: TextStyle(color: Colors.white)),
-                      );
-                    }).toList()
-                  : [], // Si no hay dispositivos, lista vacía
+              items: _devices.map((scanResult) {
+                final device = scanResult.device;
+                final nombre = scanResult.advertisementData.localName.isNotEmpty
+                    ? scanResult.advertisementData.localName
+                    : device.platformName;
+                return DropdownMenuItem(
+                  value: device,
+                  child: Text(nombre.isNotEmpty ? nombre : "Desconocido",
+                      style: TextStyle(color: Colors.white)),
+                );
+              }).toList(),
               onChanged: (device) {
                 setState(() {
                   _selectedDevice = device;
@@ -68,31 +77,31 @@ class _BluetoothMenuState extends State<BluetoothMenu> {
               decoration: InputDecoration(
                 filled: true,
                 fillColor: Colors.grey[700],
-                labelText: _devices.isNotEmpty ? "Seleccionar dispositivo" : "No hay dispositivos",
+                labelText: "Seleccionar dispositivo",
                 labelStyle: TextStyle(color: Colors.white),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
             SizedBox(height: 20),
 
-            // **Botón Conectar / Desconectar**
+            // Botón conectar o desconectar
             ElevatedButton(
               onPressed: _selectedDevice != null
-                  ? () => widget.bluetoothService.conectarDispositivo(_selectedDevice!)
+                  ? () => widget.bluetoothService.conectarODesconectar(_selectedDevice!)
                   : null,
               child: Text(widget.bluetoothService.isConnected ? "Desconectar" : "Conectar",
                   style: TextStyle(fontSize: 18)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: widget.bluetoothService.isConnected ? Colors.red : Colors.green,
+                backgroundColor:
+                    widget.bluetoothService.isConnected ? Colors.red : Colors.green,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
               ),
             ),
-
             SizedBox(height: 10),
 
-            // **Botón de actualización de dispositivos**
+            // Botón para reescanear
             ElevatedButton(
-              onPressed: _fetchPairedDevices,
+              onPressed: _iniciarEscaneo,
               child: Text("Actualizar Lista"),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue,

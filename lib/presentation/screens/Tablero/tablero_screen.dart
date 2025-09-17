@@ -61,7 +61,7 @@ void initState() {
                   child: Column(
                     children: [
                       TeamInfoWidget(isLocal: true, isDarkBackground: true),
-                      ScoreWidget("Local", gameController, true),
+                      ScoreWidget("Local", gameController, true, fontSize: 16,),
                     ],
                   ),
                 ),
@@ -70,7 +70,7 @@ void initState() {
                   child: Column(
                     children: [
                       TeamInfoWidget(isLocal: false, isDarkBackground: true),
-                      ScoreWidget("Visitante", gameController, false),
+                      ScoreWidget("Visitante", gameController, false, fontSize: 16,),
                     ],
                   ),
                 ),
@@ -80,25 +80,43 @@ void initState() {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                FoulsWidget(gameController, true),
-                FoulsWidget(gameController, false),
+                FoulsWidget(gameController, true, fontSize: 14,),
+                FoulsWidget(gameController, false, fontSize: 14,),
               ],
             ),
             const SizedBox(height: 20),
-            TimeoutWidget(gameController),
+            TimeoutWidget(gameController, isLocal: true,),
             const SizedBox(height: 20),
             TimeControls(timeController, gameController),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: "homeButton",
-        onPressed: () {
-          Navigator.pop(context);
-        },
-        backgroundColor: Colors.blue,
-        child: const Icon(Icons.arrow_back_ios_outlined, size: 30),
+     floatingActionButton: Row(
+  mainAxisSize: MainAxisSize.min,
+  children: [
+    // 🔊 Botón de bocina
+    FloatingActionButton.small(
+      heroTag: "soundButton",
+      backgroundColor: gameController.sonidoManualActivo ? Colors.red : Colors.grey,
+      onPressed: () {
+        gameController.alternarBocinaManual();
+      },
+      child: Icon(
+        gameController.sonidoManualActivo ? Icons.volume_off : Icons.volume_up,
+        size: 24,
       ),
+    ),
+    const SizedBox(width: 16),
+    // ⬅️ Botón de volver
+    FloatingActionButton(
+      heroTag: "homeButton",
+      onPressed: () => Navigator.pop(context),
+      backgroundColor: Colors.blue,
+      child: const Icon(Icons.arrow_back_ios_outlined, size: 30),
+    ),
+  ],
+),
+
     );
   }
 }

@@ -7,61 +7,73 @@ class PeriodWidget extends StatelessWidget {
   final GameController gameController;
   final TimeController timeController;
 
-  PeriodWidget(this.gameController, this.timeController);
+  const PeriodWidget(this.gameController, this.timeController, {super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
+  @override
+Widget build(BuildContext context) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text("Periodo", style: TextStyle(fontSize: 30, color: Colors.white)),
-        SizedBox(height: 5),
-        Text("${gameController.gameState.periodo}",
-            style: TextStyle(
-                fontSize: 60,
-                fontWeight: FontWeight.bold,
-                color: Colors.white)),
+        const Text(
+          "Período",
+          style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          "${gameController.gameState.periodo}",
+          style: const TextStyle(
+            fontSize: 36,
+            fontWeight: FontWeight.bold,
+            color: Colors.amberAccent,
+            shadows: [Shadow(blurRadius: 6, color: Colors.amber)],
+          ),
+        ),
+        const SizedBox(height: 4),
         ElevatedButton(
           onPressed: () {
             if (gameController.gameState.periodo < timeController.totalPeriodos) {
-              gameController.cambiarPeriodo(timeController);
-              timeController.reiniciarTiempo(gameController);
+              timeController.siguientePeriodo();
             } else {
               _mostrarAlerta(context, gameController);
             }
           },
-          child: Text("Siguiente", style: TextStyle(fontSize: 20)),
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.purple,
+            backgroundColor: Colors.deepPurple,
             foregroundColor: Colors.white,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-            padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            minimumSize: const Size(0, 30),
           ),
+          child: const Text("Siguiente", style: TextStyle(fontSize: 14)),
         ),
       ],
-    );
-  }
+    ),
+  );
+}
 
-  /// **📌 Función para mostrar la alerta y bloquear la pantalla**
+
   void _mostrarAlerta(BuildContext context, GameController gameController) {
     showDialog(
       context: context,
-      barrierDismissible: false, // 🔹 Evita que se cierre al tocar fuera de la alerta
+      barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        title: Text("⚠️ Fin del Partido"),
-        content: Text("El partido ha terminado. No se pueden agregar más períodos."),
+        title: const Text("⚠️ Fin del Partido"),
+        content: const Text("El partido ha terminado. No se pueden agregar más períodos."),
         actions: [
           TextButton(
             onPressed: () {
               context.push('/deportes');
-              gameController.reiniciarPeriodo(); // 🔹 Reiniciar período al salir del tablero
+              gameController.reiniciarPeriodo();
             },
-            child: Text("Aceptar"),
+            child: const Text("Aceptar"),
           ),
         ],
       ),
     );
   }
 }
-
-
